@@ -18,17 +18,6 @@ import {
   EnumType,
 } from './schema';
 
-// 缓存 Parser 实例，提高性能
-const parserCache = new Map<string, Parser>();
-
-// 获取或创建 Parser 实例
-function getParser(dialect: string): Parser {
-  if (!parserCache.has(dialect)) {
-    parserCache.set(dialect, new Parser());
-  }
-  return parserCache.get(dialect)!;
-}
-
 /**
  * 类型解析器接口
  * 用于自定义 SQL 类型到 SQLType 的映射逻辑
@@ -49,7 +38,7 @@ export interface SQLParserOptions {
   /**
    * 数据库方言（影响 AST 解析规则）
    */
-  dialect: 'mysql' | 'postgres' | 'sqlite' | 'sqlserver' | string;
+  dialect: string;
 
   /**
    * 数据库名称（用于构建 DatabaseSchema）
@@ -134,7 +123,7 @@ export interface ColumnDefinition {
   primary_key?: boolean;
   unique?: boolean;
   default_val?: {
-    value: any;
+    value: unknown;
   };
   comment?: {
     value: {
@@ -194,14 +183,14 @@ export function parseSQL(
   }
 
   try {
-    const parser = getParser(options.dialect);
+    const parser = new Parser();
 
     /**
      * 预处理 SQL 字符串
      * 1. 移除多余的空白字符
      * 2. 确保每个语句都以分号结尾
      */
-    const processedSql = sql.trim().replace(/\s+/g, ' ').replace(/;\s*;/g, ';');
+    const processedSql = sql.trim().replace(/\s+/g, ' ').replace(/;[\s;]*;/g, ';');
 
     /**
      * node-sql-parser 会根据 database 参数
@@ -281,13 +270,9 @@ export class SQLParser {
       }
     }
 
-    // 构建 tablesMap 快速索引
-    db.tablesMap = {};
-    for (const table of db.tables) {
-      if (table.name) {
-        db.tablesMap[table.name] = table;
-      }
-    }
+    db.tablesMap = Object.fromEntries(
+      db.tables.filter(t => t.name).map(t => [t.name, t])
+    );
 
     return db;
   }
@@ -295,8 +280,10 @@ export class SQLParser {
   /**
    * 类型守卫：判断是否为 CREATE TABLE 语句
    */
-  private isCreateTable(node: any): node is CreateTableAST {
-    return node.type === 'create' && node.keyword === 'table';
+  private isCreateTable(node: unknown): node is CreateTableAST {
+    if (!node || typeof node !== 'object') return false;
+    const n = node as Record<string, unknown>;
+    return n.type === 'create' && n.keyword === 'table';
   }
 
   /**
@@ -603,12 +590,12 @@ export class SQLParser {
           // 从 expr.value 中获取枚举值
           if (def.expr && def.expr.value) {
             const values = def.expr.value.map(
-              (v: { value?: string; raw?: any }) => {
+              (v: { value?: string; raw?: unknown }) => {
                 let value: string;
                 if (v.value) {
                   value = v.value;
                 } else if (v.raw) {
-                  value = v.raw;
+                  value = String(v.raw);
                 } else {
                   value = String(v);
                 }
@@ -670,22 +657,24 @@ export class SQLParser {
    *
    * 使用 sqlify 确保函数/表达式被正确序列化
    */
-  private parseDefault(def: { value: any }): string | null {
-    // 处理 null 类型的默认值
-    if (def.value?.type === 'null' || def.value === null) {
+  private parseDefault(def: { value: unknown }): string | null {
+    const val = def.value as Record<string, unknown> | null;
+    if (val?.type === 'null' || val === null) {
       return null;
     }
 
     try {
-      return this.parser.sqlify(def.value);
-    } catch (error: any) {
-      if (def.value?.type === 'function') {
-        // 处理函数类型的默认值
-        if (def.value.name?.name?.[0]?.value) {
-          return def.value.name.name[0].value;
+      return this.parser.sqlify(val as any);
+    } catch {
+      if (val?.type === 'function') {
+        const name = val.name as Record<string, unknown> | undefined;
+        const firstName = name?.name as Array<Record<string, unknown>> | undefined;
+        if (firstName?.[0]?.value) {
+          return String(firstName[0].value);
         }
       }
-      return String(def.value?.value ?? def.value);
+      const inner = val as Record<string, unknown> | undefined;
+      return String(inner?.value ?? val);
     }
   }
 }

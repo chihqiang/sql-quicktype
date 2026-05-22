@@ -1,5 +1,5 @@
 import { ColumnSchema, DatabaseSchema, SQLType, TableSchema } from '../schema';
-import { AGenerator, Options } from './generator';
+import { AGenerator, Options } from './base';
 
 /**
  * TypeScript 语言生成器

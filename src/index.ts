@@ -52,13 +52,9 @@ export {
 export type {
   /** 代码生成选项 */
   GenerateOptions,
-} from './cli/generate';
+} from './cli/output';
 
-export { generateCode } from './utils';
+export { generateCode } from './generate';
 
-// 导出 Reader 相关的类型和工具
-export type { Reader } from './reader';
-export { ReaderFactory } from './reader/ReaderFactory';
-export type { ReaderOptions } from './reader/ReaderFactory';
-export { StringReader } from './reader/StringReader';
-export { FileReader } from './reader/FileReader';
+// 导出 Reader 相关的工具函数
+export { readSQLFromFile, readSQLFromString } from './reader';

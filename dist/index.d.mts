@@ -2,7 +2,7 @@ import { AST } from 'node-sql-parser';
 
 interface DatabaseSchema {
     name: string;
-    dialect: 'mysql' | 'postgres' | 'sqlite' | 'sqlserver' | string;
+    dialect: string;
     charset?: string;
     collation?: string;
     comment?: string;
@@ -12,7 +12,7 @@ interface DatabaseSchema {
         updatedAt?: string;
         version?: string;
         engine?: string;
-        [key: string]: any;
+        [key: string]: unknown;
     };
     tablesMap?: Record<string, TableSchema>;
 }
@@ -98,7 +98,7 @@ interface TypeResolver {
     resolve(def: ColumnDefinition['definition']): SQLType | null;
 }
 interface SQLParserOptions {
-    dialect: 'mysql' | 'postgres' | 'sqlite' | 'sqlserver' | string;
+    dialect: string;
     dbName?: string;
     strictMode?: boolean;
     ignoreComments?: boolean;
@@ -130,7 +130,7 @@ interface ColumnDefinition {
     primary_key?: boolean;
     unique?: boolean;
     default_val?: {
-        value: any;
+        value: unknown;
     };
     comment?: {
         value: {
@@ -160,34 +160,32 @@ declare class SQLParser {
     private parseDefault;
 }
 
-declare class XormGenerator extends AGenerator {
-    private options;
-    constructor(options?: Options);
-    generateDatabase(database: DatabaseSchema): string;
-    generateTable(table: TableSchema): string;
-    generateColumn(column: ColumnSchema): string;
-    mapSQLType(type: SQLType): string;
-    private generateXormTag;
-}
+declare const LANGUAGES: readonly ["go", "typescript", "gorm", "xorm"];
+type Language = typeof LANGUAGES[number];
+declare const MODES: readonly ["single", "multi"];
+type Mode = typeof MODES[number];
 
-declare class GormGenerator extends AGenerator {
-    private options;
-    constructor(options?: Options);
-    generateDatabase(database: DatabaseSchema): string;
-    generateTable(table: TableSchema): string;
-    generateColumn(column: ColumnSchema): string;
-    mapSQLType(type: SQLType): string;
-    private generateGormTag;
+interface Options {
+    language: Language;
+    generateComments?: boolean;
+    namespace?: string;
 }
-
-declare class GolangGenerator extends AGenerator {
-    private options;
-    constructor(options?: Options);
-    generateDatabase(database: DatabaseSchema): string;
-    generateTable(table: TableSchema): string;
-    generateColumn(column: ColumnSchema): string;
-    mapSQLType(type: SQLType): string;
-    private generateGoTag;
+declare abstract class AGenerator {
+    abstract generateDatabase(database: DatabaseSchema): string;
+    abstract generateTable(table: TableSchema): string;
+    abstract generateColumn(column: ColumnSchema): string;
+    abstract mapSQLType(type: SQLType): string;
+    protected formatTypeName(name: string): string;
+    protected formatFieldNamePascalCase(name: string): string;
+    protected formatFieldName(name: string): string;
+    protected generateDefaultValue(column: ColumnSchema): string;
+    private _needsTime;
+    protected needsTimeImport(database: DatabaseSchema): boolean;
+}
+declare class GeneratorFactory {
+    private static registry;
+    static register(language: string, constructor: new (options: Options) => AGenerator): void;
+    static createGenerator(language: Language, options?: Options): AGenerator;
 }
 
 declare class TypeScriptGenerator extends AGenerator {
@@ -200,29 +198,40 @@ declare class TypeScriptGenerator extends AGenerator {
     mapSQLType(type: SQLType, columnName?: string): string;
 }
 
-interface Options {
-    language: 'go' | 'typescript' | 'gorm' | 'xorm';
-    generateComments?: boolean;
-    namespace?: string;
+declare class GolangGenerator extends AGenerator {
+    private options;
+    constructor(options?: Options);
+    generateDatabase(database: DatabaseSchema): string;
+    generateTable(table: TableSchema): string;
+    generateColumn(column: ColumnSchema): string;
+    mapSQLType(type: SQLType): string;
+    private generateGoTag;
 }
-declare abstract class AGenerator {
-    abstract generateDatabase(database: DatabaseSchema): string;
-    abstract generateTable(table: TableSchema): string;
-    abstract generateColumn(column: ColumnSchema): string;
-    abstract mapSQLType(type: SQLType): string;
-    protected formatTypeName(name: string): string;
-    protected formatFieldName(name: string): string;
-    protected generateDefaultValue(column: ColumnSchema): string;
-    protected needsTimeImport(database: DatabaseSchema): boolean;
+
+declare class GormGenerator extends AGenerator {
+    private options;
+    constructor(options?: Options);
+    generateDatabase(database: DatabaseSchema): string;
+    generateTable(table: TableSchema): string;
+    generateColumn(column: ColumnSchema): string;
+    mapSQLType(type: SQLType): string;
+    private generateGormTag;
 }
-declare class GeneratorFactory {
-    static createGenerator(language: 'go' | 'typescript' | 'gorm' | 'xorm', options?: Options): Promise<TypeScriptGenerator | GolangGenerator | GormGenerator | XormGenerator>;
+
+declare class XormGenerator extends AGenerator {
+    private options;
+    constructor(options?: Options);
+    generateDatabase(database: DatabaseSchema): string;
+    generateTable(table: TableSchema): string;
+    generateColumn(column: ColumnSchema): string;
+    mapSQLType(type: SQLType): string;
+    private generateXormTag;
 }
 
 interface GenerateOptions {
     output: string;
-    language: string;
-    mode: string;
+    language: Language;
+    mode: Mode;
     namespace?: string;
     dialect: string;
     dbName: string;
@@ -233,31 +242,9 @@ declare function generateCode(sql: string, options: {
     namespace?: string;
     dialect?: string;
     dbName?: string;
-}): Promise<string>;
+}): string;
 
-interface Reader {
-    read(): Promise<string>;
-}
+declare function readSQLFromFile(path: string): Promise<string>;
+declare function readSQLFromString(sql: string): Promise<string>;
 
-interface ReaderOptions {
-    type: 'string' | 'file';
-    source: string;
-    [key: string]: any;
-}
-declare class ReaderFactory {
-    static createReader(options: ReaderOptions): Reader;
-}
-
-declare class StringReader implements Reader {
-    private sql;
-    constructor(sql: string);
-    read(): Promise<string>;
-}
-
-declare class FileReader implements Reader {
-    private filePath;
-    constructor(filePath: string);
-    read(): Promise<string>;
-}
-
-export { AGenerator, type BigIntType, type BooleanType, type ColumnSchema, type DatabaseSchema, type DateTimeType, type DateType, type DecimalType, type EnumType, FileReader, type FloatType, type GenerateOptions, GeneratorFactory, GolangGenerator, GormGenerator, type IntType, type JsonType, type Reader, ReaderFactory, type ReaderOptions, SQLParser, type SQLParserOptions, type SQLType, StringReader, type TableIndex, type TableSchema, type TextType, type TypeResolver, TypeScriptGenerator, type VarcharType, XormGenerator, generateCode, parseSQL };
+export { AGenerator, type BigIntType, type BooleanType, type ColumnSchema, type DatabaseSchema, type DateTimeType, type DateType, type DecimalType, type EnumType, type FloatType, type GenerateOptions, GeneratorFactory, GolangGenerator, GormGenerator, type IntType, type JsonType, SQLParser, type SQLParserOptions, type SQLType, type TableIndex, type TableSchema, type TextType, type TypeResolver, TypeScriptGenerator, type VarcharType, XormGenerator, generateCode, parseSQL, readSQLFromFile, readSQLFromString };

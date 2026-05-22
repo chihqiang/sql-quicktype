@@ -1,59 +1,33 @@
-import { ReaderFactory } from '../src/reader/ReaderFactory';
+import { readSQLFromString, readSQLFromFile } from '../src/reader';
 
 describe('Reader', () => {
-  describe('StringReader', () => {
-    it('should read string content', async () => {
+  describe('readSQLFromString', () => {
+    it('should return the SQL string content', async () => {
       const sqlContent = 'CREATE TABLE users (id INT PRIMARY KEY);';
-      const reader = ReaderFactory.createReader({
-        type: 'string',
-        source: sqlContent,
-      });
-
-      const content = await reader.read();
-
+      const content = await readSQLFromString(sqlContent);
       expect(content).toBe(sqlContent);
     });
 
-    it('should throw error for empty string source', () => {
-      expect(() => {
-        ReaderFactory.createReader({ type: 'string', source: '' });
-      }).toThrow('Source is required for string reader');
+    it('should throw error for empty string', async () => {
+      await expect(readSQLFromString('')).rejects.toThrow('SQL string is required');
     });
 
-    it('should throw error for undefined string source', () => {
-      expect(() => {
-        ReaderFactory.createReader({
-          type: 'string',
-          source: undefined as any,
-        });
-      }).toThrow('Source is required for string reader');
+    it('should throw error for undefined', async () => {
+      await expect(readSQLFromString(undefined as any)).rejects.toThrow('SQL string is required');
     });
   });
 
-  describe('FileReader', () => {
-    it('should throw error for empty file source', () => {
-      expect(() => {
-        ReaderFactory.createReader({ type: 'file', source: '' });
-      }).toThrow('Source is required for file reader');
+  describe('readSQLFromFile', () => {
+    it('should throw error for empty path', async () => {
+      await expect(readSQLFromFile('')).rejects.toThrow('File path is required');
     });
 
-    it('should throw error for undefined file source', () => {
-      expect(() => {
-        ReaderFactory.createReader({ type: 'file', source: undefined as any });
-      }).toThrow('Source is required for file reader');
+    it('should throw error for undefined path', async () => {
+      await expect(readSQLFromFile(undefined as any)).rejects.toThrow('File path is required');
     });
 
-    // Note: 实际的文件读取测试需要创建临时文件，这里只测试参数验证
-  });
-
-  describe('Reader Factory', () => {
-    it('should throw error for unsupported reader type', () => {
-      expect(() => {
-        ReaderFactory.createReader({
-          type: 'unsupported' as any,
-          source: 'test',
-        });
-      }).toThrow('Unsupported reader type: unsupported');
+    it('should throw error for non-existent file', async () => {
+      await expect(readSQLFromFile('/nonexistent/file.sql')).rejects.toThrow('File not found');
     });
   });
 });

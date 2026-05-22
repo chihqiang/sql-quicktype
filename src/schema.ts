@@ -10,8 +10,8 @@ export interface DatabaseSchema {
   /** 数据库名 */
   name: string;
 
-  /** 数据库方言（决定类型映射、DDL 生成策略） */
-  dialect: 'mysql' | 'postgres' | 'sqlite' | 'sqlserver' | string;
+  /** 数据库方言（决定类型映射、DDL 生成策略），可选值：mysql | postgres | sqlite | sqlserver */
+  dialect: string;
 
   /** 默认字符集（MySQL 常用） */
   charset?: string;
@@ -34,7 +34,7 @@ export interface DatabaseSchema {
     updatedAt?: string;
     version?: string;
     engine?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 
   /**

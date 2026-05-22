@@ -7,18 +7,11 @@
  */
 
 import { Command } from 'commander';
-import { generateCode, addCommonGenerateOptions } from './generate';
-import mysql from 'mysql2/promise';
-import { DEFAULT_NAMESPACE, LANGUAGES_REQUIRING_NAMESPACE } from './generate';
+import { generateCodeToFiles, addCommonGenerateOptions } from './output';
+import { DEFAULT_NAMESPACE, LANGUAGES_REQUIRING_NAMESPACE } from '../constants';
+import mysql, { RowDataPacket } from 'mysql2/promise';
 
-/**
- * commandGenerateDb
- *
- * Registers the 'generate-db' CLI command.
- *
- * @param program - Commander.js program instance
- */
-export async function commandGenerateDb(program: Command) {
+export function commandGenerateDb(program: Command) {
   const command = program
     .command('db')
     .description('Generate code from database connection')
@@ -54,8 +47,9 @@ export async function commandGenerateDb(program: Command) {
       console.log('Connected to database successfully');
 
       const [tablesResult] = await connection.execute('SHOW TABLES');
-      const tables: string[] = (tablesResult as any[]).map(
-        (row: any) => Object.values(row)[0] as string
+      const rows = tablesResult as RowDataPacket[];
+      const tables = rows.map(
+        (row) => Object.values(row)[0] as string
       );
       console.log(`Found ${tables.length} tables: ${tables.join(', ')}`);
 
@@ -66,21 +60,16 @@ export async function commandGenerateDb(program: Command) {
         options.namespace = DEFAULT_NAMESPACE;
       }
 
-      let successCount = 0;
-      let failCount = 0;
-      const failedTables: string[] = [];
-
-      for (const tableName of tables) {
-        console.log(`Processing table: ${tableName}`);
-
-        try {
+      const results = await Promise.allSettled(
+        tables.map(async (tableName) => {
+          console.log(`Processing table: ${tableName}`);
           const [result] = await connection!.execute(
             `SHOW CREATE TABLE \`${tableName}\``
           );
-          const row = (result as any[])[0] as Record<string, any>;
-          const createTableSql = row['Create Table'];
+          const resultRows = result as RowDataPacket[];
+          const createTableSql = resultRows[0]?.['Create Table'] as string | undefined;
 
-          await generateCode(createTableSql, {
+          await generateCodeToFiles(createTableSql, {
             output: options.output,
             language: options.language,
             mode: 'multi',
@@ -88,19 +77,25 @@ export async function commandGenerateDb(program: Command) {
             dialect: options.dialect,
             dbName: options.dbName || options.database,
           });
+        })
+      );
+
+      let successCount = 0;
+      const failedTables: string[] = [];
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].status === 'fulfilled') {
           successCount++;
-        } catch (error) {
+        } else {
+          failedTables.push(tables[i]);
           console.error(
-            `Failed to process table '${tableName}':`,
-            (error as Error).message
+            `Failed to process table '${tables[i]}':`,
+            (results[i] as PromiseRejectedResult).reason?.message || 'Unknown error'
           );
-          failCount++;
-          failedTables.push(tableName);
         }
       }
 
       console.log(
-        `\nSummary: ${successCount} tables succeeded, ${failCount} tables failed`
+        `\nSummary: ${successCount} tables succeeded, ${failedTables.length} tables failed`
       );
       if (failedTables.length > 0) {
         console.log(`Failed tables: ${failedTables.join(', ')}`);

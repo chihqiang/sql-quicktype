@@ -6,13 +6,6 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-};
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -30,695 +23,18 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// src/generator/TypeScriptGenerator.ts
-var TypeScriptGenerator_exports = {};
-__export(TypeScriptGenerator_exports, {
-  TypeScriptGenerator: () => TypeScriptGenerator
-});
-var TypeScriptGenerator;
-var init_TypeScriptGenerator = __esm({
-  "src/generator/TypeScriptGenerator.ts"() {
-    "use strict";
-    init_generator();
-    TypeScriptGenerator = class extends AGenerator {
-      constructor(options = { language: "typescript" }) {
-        super();
-        this.options = options;
-      }
-      /**
-       * 格式化字段名称（使用驼峰命名）
-       */
-      formatFieldName(name) {
-        return name.split("_").map((part, index) => {
-          if (index === 0) {
-            return part.toLowerCase();
-          }
-          return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-        }).join("");
-      }
-      /**
-       * 生成整个数据库模式的类型定义
-       */
-      generateDatabase(database) {
-        let result = `// Database: ${database.name}
-`;
-        result += `// Dialect: ${database.dialect}
-
-`;
-        for (const table of database.tables) {
-          result += this.generateTable(table);
-          result += "\n";
-        }
-        return result;
-      }
-      /**
-       * 生成单个表的类型定义
-       */
-      generateTable(table) {
-        let result = `// ${table.name} \u8868\u7ED3\u6784
-`;
-        result += `export interface ${this.formatTypeName(table.name)} {
-`;
-        for (const column of table.columns) {
-          result += this.generateColumn(column);
-        }
-        result += "}\n";
-        return result;
-      }
-      /**
-       * 生成列的类型定义
-       */
-      generateColumn(column) {
-        const fieldName = this.formatFieldName(column.name);
-        const typeName = this.mapSQLType(column.type, column.name);
-        const optional = column.nullable ? "?" : "";
-        let result = `	${fieldName}${optional}: ${typeName}`;
-        if (column.comment && this.options.generateComments !== false) {
-          result += `; // ${column.comment}`;
-        }
-        result += "\n";
-        return result;
-      }
-      /**
-       * 映射 SQL 类型到 TypeScript 类型
-       */
-      mapSQLType(type, columnName) {
-        switch (type.kind) {
-          case "int":
-          case "bigint":
-            return "number";
-          case "float":
-          case "decimal":
-            return "number";
-          case "varchar":
-          case "text":
-            return "string";
-          case "boolean":
-            return "boolean";
-          case "date":
-          case "datetime":
-            return "Date";
-          case "json":
-            return "unknown";
-          case "enum":
-            if (type.values && type.values.length > 0) {
-              const enumValues = type.values.map((v) => `'${v}'`).join(" | ");
-              if (columnName) {
-                const fieldName = this.formatFieldName(columnName);
-                return `${fieldName}: ${enumValues}`;
-              }
-              return enumValues;
-            }
-            return "string";
-          default:
-            return "string";
-        }
-      }
-    };
-  }
-});
-
-// src/generator/GolangGenerator.ts
-var GolangGenerator_exports = {};
-__export(GolangGenerator_exports, {
-  GolangGenerator: () => GolangGenerator
-});
-var GolangGenerator;
-var init_GolangGenerator = __esm({
-  "src/generator/GolangGenerator.ts"() {
-    "use strict";
-    init_generator();
-    GolangGenerator = class extends AGenerator {
-      constructor(options = { language: "go" }) {
-        super();
-        this.options = options;
-      }
-      /**
-       * 生成整个数据库模式的类型定义
-       */
-      generateDatabase(database) {
-        let result = `// Database: ${database.name}
-`;
-        result += `// Dialect: ${database.dialect}
-
-`;
-        if (this.options.namespace) {
-          result += `package ${this.options.namespace}
-
-`;
-        }
-        if (this.needsTimeImport(database)) {
-          result += `import "time"
-
-`;
-        }
-        for (const table of database.tables) {
-          result += this.generateTable(table);
-          result += "\n";
-        }
-        return result;
-      }
-      /**
-       * 生成单个表的类型定义
-       */
-      generateTable(table) {
-        let result = `// ${table.name} \u8868\u7ED3\u6784
-`;
-        result += `type ${this.formatTypeName(table.name)} struct {
-`;
-        for (const column of table.columns) {
-          result += this.generateColumn(column);
-        }
-        result += "}\n";
-        return result;
-      }
-      /**
-       * 生成列的类型定义
-       */
-      generateColumn(column) {
-        const fieldName = this.formatFieldName(column.name);
-        const typeName = this.mapSQLType(column.type);
-        const tag = this.generateGoTag(column);
-        let result = `	${fieldName} ${typeName} ${tag}`;
-        if (column.comment && this.options.generateComments !== false) {
-          result += ` // ${column.comment}`;
-        }
-        result += "\n";
-        return result;
-      }
-      /**
-       * 映射 SQL 类型到 Go 类型
-       */
-      mapSQLType(type) {
-        switch (type.kind) {
-          case "int":
-            return "int";
-          case "bigint":
-            return "int64";
-          case "float":
-            return "float64";
-          case "decimal":
-            return "float64";
-          case "varchar":
-          case "text":
-            return "string";
-          case "boolean":
-            return "bool";
-          case "date":
-          case "datetime":
-            return "time.Time";
-          case "json":
-            return "interface{}";
-          case "enum":
-            return "string";
-          default:
-            return "string";
-        }
-      }
-      /**
-       * 生成 Go 结构体标签
-       */
-      generateGoTag(column) {
-        const tags = [];
-        tags.push(`json:"${column.name}"`);
-        tags.push(`db:"${column.name}"`);
-        return `\`${tags.join(" ")}\``;
-      }
-    };
-  }
-});
-
-// src/generator/GormGenerator.ts
-var GormGenerator_exports = {};
-__export(GormGenerator_exports, {
-  GormGenerator: () => GormGenerator
-});
-var GormGenerator;
-var init_GormGenerator = __esm({
-  "src/generator/GormGenerator.ts"() {
-    "use strict";
-    init_generator();
-    GormGenerator = class extends AGenerator {
-      constructor(options = { language: "gorm" }) {
-        super();
-        this.options = options;
-      }
-      /**
-       * 生成整个数据库模式的类型定义
-       */
-      generateDatabase(database) {
-        let result = `// Database: ${database.name}
-`;
-        result += `// Dialect: ${database.dialect}
-
-`;
-        if (this.options.namespace) {
-          result += `package ${this.options.namespace}
-
-`;
-        }
-        if (this.needsTimeImport(database)) {
-          result += `import "time"
-
-`;
-        }
-        for (const table of database.tables) {
-          result += this.generateTable(table);
-          result += "\n";
-        }
-        return result;
-      }
-      /**
-       * 生成单个表的类型定义
-       */
-      generateTable(table) {
-        let result = `// ${table.name} \u8868\u7ED3\u6784
-`;
-        result += `type ${this.formatTypeName(table.name)} struct {
-`;
-        for (const column of table.columns) {
-          result += this.generateColumn(column);
-        }
-        result += "}\n";
-        return result;
-      }
-      /**
-       * 生成列的类型定义
-       */
-      generateColumn(column) {
-        const fieldName = this.formatFieldName(column.name);
-        const typeName = this.mapSQLType(column.type);
-        const tag = this.generateGormTag(column);
-        let result = `	${fieldName} ${typeName} ${tag}`;
-        if (column.comment && this.options.generateComments !== false) {
-          result += ` // ${column.comment}`;
-        }
-        result += "\n";
-        return result;
-      }
-      /**
-       * 映射 SQL 类型到 GORM 类型
-       */
-      mapSQLType(type) {
-        switch (type.kind) {
-          case "int":
-            return "int";
-          case "bigint":
-            return "int64";
-          case "float":
-            return "float64";
-          case "decimal":
-            return "float64";
-          case "varchar":
-          case "text":
-            return "string";
-          case "boolean":
-            return "bool";
-          case "date":
-          case "datetime":
-            return "time.Time";
-          case "json":
-            return "interface{}";
-          case "enum":
-            return "string";
-          default:
-            return "string";
-        }
-      }
-      /**
-       * 生成 GORM 结构体标签
-       */
-      generateGormTag(column) {
-        const tags = [];
-        tags.push(`column:${column.name}`);
-        let typeTag = "type:";
-        switch (column.type.kind) {
-          case "int":
-            typeTag += "int";
-            if (column.type.length) {
-              typeTag += `(${column.type.length})`;
-            }
-            break;
-          case "bigint":
-            typeTag += "bigint";
-            if (column.type.length) {
-              typeTag += `(${column.type.length})`;
-            }
-            break;
-          case "float":
-            typeTag += "float";
-            if (column.type.precision) {
-              typeTag += `(${column.type.precision}`;
-              if (column.type.scale) {
-                typeTag += `,${column.type.scale}`;
-              }
-              typeTag += ")";
-            }
-            break;
-          case "decimal":
-            typeTag += "decimal";
-            if (column.type.precision) {
-              typeTag += `(${column.type.precision}`;
-              if (column.type.scale) {
-                typeTag += `,${column.type.scale}`;
-              }
-              typeTag += ")";
-            }
-            break;
-          case "varchar":
-            typeTag += "varchar";
-            if (column.type.length) {
-              typeTag += `(${column.type.length})`;
-            }
-            break;
-          case "text":
-            typeTag += "text";
-            break;
-          case "boolean":
-            typeTag += "bool";
-            break;
-          case "date":
-            typeTag += "date";
-            break;
-          case "datetime":
-            typeTag += "datetime";
-            break;
-          case "json":
-            typeTag += "json";
-            break;
-          case "enum":
-            typeTag += "enum";
-            break;
-          default:
-            typeTag += "string";
-        }
-        tags.push(typeTag);
-        if (column.primaryKey) {
-          tags.push("primaryKey");
-        }
-        if (column.unique) {
-          tags.push("unique");
-        }
-        if (!column.nullable) {
-          tags.push("not null");
-        }
-        if (column.default) {
-          tags.push(`default:${column.default}`);
-        }
-        if (column.generated) {
-          tags.push("autoIncrement");
-        }
-        if (column.comment) {
-          tags.push(`comment:${column.comment}`);
-        }
-        return `\`gorm:"${tags.join(";")}" json:"${column.name}"\``;
-      }
-    };
-  }
-});
-
-// src/generator/XormGenerator.ts
-var XormGenerator_exports = {};
-__export(XormGenerator_exports, {
-  XormGenerator: () => XormGenerator
-});
-var XormGenerator;
-var init_XormGenerator = __esm({
-  "src/generator/XormGenerator.ts"() {
-    "use strict";
-    init_generator();
-    XormGenerator = class extends AGenerator {
-      constructor(options = { language: "xorm" }) {
-        super();
-        this.options = options;
-      }
-      /**
-       * 生成整个数据库模式的类型定义
-       */
-      generateDatabase(database) {
-        let result = `// Database: ${database.name}
-`;
-        result += `// Dialect: ${database.dialect}
-
-`;
-        if (this.options.namespace) {
-          result += `package ${this.options.namespace}
-
-`;
-        }
-        if (this.needsTimeImport(database)) {
-          result += `import "time"
-
-`;
-        }
-        for (const table of database.tables) {
-          result += this.generateTable(table);
-          result += "\n";
-        }
-        return result;
-      }
-      /**
-       * 生成单个表的类型定义
-       */
-      generateTable(table) {
-        let result = `// ${table.name} \u8868\u7ED3\u6784
-`;
-        result += `type ${this.formatTypeName(table.name)} struct {
-`;
-        for (const column of table.columns) {
-          result += this.generateColumn(column);
-        }
-        result += "}\n";
-        return result;
-      }
-      /**
-       * 生成列的类型定义
-       */
-      generateColumn(column) {
-        const fieldName = this.formatFieldName(column.name);
-        const typeName = this.mapSQLType(column.type);
-        const tag = this.generateXormTag(column);
-        let result = `	${fieldName} ${typeName} ${tag}`;
-        if (column.comment && this.options.generateComments !== false) {
-          result += ` // ${column.comment}`;
-        }
-        result += "\n";
-        return result;
-      }
-      /**
-       * 映射 SQL 类型到 XORM 类型
-       */
-      mapSQLType(type) {
-        switch (type.kind) {
-          case "int":
-            return "int";
-          case "bigint":
-            return "int64";
-          case "float":
-            return "float64";
-          case "decimal":
-            return "float64";
-          case "varchar":
-          case "text":
-            return "string";
-          case "boolean":
-            return "bool";
-          case "date":
-          case "datetime":
-            return "time.Time";
-          case "json":
-            return "interface{}";
-          case "enum":
-            return "string";
-          default:
-            return "string";
-        }
-      }
-      /**
-       * 生成 XORM 结构体标签
-       */
-      generateXormTag(column) {
-        const tags = [];
-        tags.push(`${column.name}`);
-        let typeTag = "";
-        switch (column.type.kind) {
-          case "int":
-            typeTag = "int";
-            if (column.type.length) {
-              typeTag += `(${column.type.length})`;
-            }
-            break;
-          case "bigint":
-            typeTag = "bigint";
-            if (column.type.length) {
-              typeTag += `(${column.type.length})`;
-            }
-            break;
-          case "float":
-            typeTag = "float";
-            if (column.type.precision) {
-              typeTag += `(${column.type.precision}`;
-              if (column.type.scale) {
-                typeTag += `,${column.type.scale}`;
-              }
-              typeTag += ")";
-            }
-            break;
-          case "decimal":
-            typeTag = "decimal";
-            if (column.type.precision) {
-              typeTag += `(${column.type.precision}`;
-              if (column.type.scale) {
-                typeTag += `,${column.type.scale}`;
-              }
-              typeTag += ")";
-            }
-            break;
-          case "varchar":
-            typeTag = "varchar";
-            if (column.type.length) {
-              typeTag += `(${column.type.length})`;
-            }
-            break;
-          case "text":
-            typeTag = "text";
-            break;
-          case "boolean":
-            typeTag = "bool";
-            break;
-          case "date":
-            typeTag = "date";
-            break;
-          case "datetime":
-            typeTag = "datetime";
-            break;
-          case "json":
-            typeTag = "json";
-            break;
-          case "enum":
-            typeTag = "enum";
-            break;
-          default:
-            typeTag = "string";
-        }
-        if (typeTag) {
-          tags.push(typeTag);
-        }
-        if (column.primaryKey) {
-          tags.push("pk");
-        }
-        if (column.unique) {
-          tags.push("unique");
-        }
-        if (!column.nullable) {
-          tags.push("notnull");
-        }
-        if (column.default) {
-          tags.push(`default(${column.default})`);
-        }
-        if (column.generated) {
-          tags.push("autoincr");
-        }
-        if (column.comment) {
-          tags.push(`comment(${column.comment})`);
-        }
-        return `\`xorm:"${tags.join(" ")}" json:"${column.name}"\``;
-      }
-    };
-  }
-});
-
-// src/generator/generator.ts
-var AGenerator, GeneratorFactory;
-var init_generator = __esm({
-  "src/generator/generator.ts"() {
-    "use strict";
-    AGenerator = class {
-      /**
-       * 格式化类型名称（如驼峰命名、帕斯卡命名等）
-       */
-      formatTypeName(name) {
-        return name.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join("");
-      }
-      /**
-       * 格式化字段名称
-       */
-      formatFieldName(name) {
-        return name.split("_").map((part) => {
-          return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-        }).join("");
-      }
-      /**
-       * 生成默认值
-       */
-      generateDefaultValue(column) {
-        if (!column.default) {
-          return "";
-        }
-        return column.default;
-      }
-      /**
-       * 检查是否需要导入 time 包
-       */
-      needsTimeImport(database) {
-        for (const table of database.tables) {
-          for (const column of table.columns) {
-            if (column.type.kind === "date" || column.type.kind === "datetime") {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-    };
-    GeneratorFactory = class {
-      /**
-       * 创建语言生成器实例
-       * @param language 目标语言
-       * @param options 生成器配置选项
-       * @returns 语言生成器实例
-       */
-      static async createGenerator(language, options = { language }) {
-        switch (language) {
-          case "typescript":
-            const { TypeScriptGenerator: TypeScriptGenerator2 } = await Promise.resolve().then(() => (init_TypeScriptGenerator(), TypeScriptGenerator_exports));
-            return new TypeScriptGenerator2(options);
-          case "go":
-            const { GolangGenerator: GolangGenerator2 } = await Promise.resolve().then(() => (init_GolangGenerator(), GolangGenerator_exports));
-            return new GolangGenerator2(options);
-          case "gorm":
-            const { GormGenerator: GormGenerator2 } = await Promise.resolve().then(() => (init_GormGenerator(), GormGenerator_exports));
-            return new GormGenerator2(options);
-          case "xorm":
-            const { XormGenerator: XormGenerator2 } = await Promise.resolve().then(() => (init_XormGenerator(), XormGenerator_exports));
-            return new XormGenerator2(options);
-          default:
-            throw new Error(`Unsupported language: ${language}`);
-        }
-      }
-    };
-  }
-});
-
 // src/cli.ts
 var import_commander = require("commander");
 
 // src/sql-parser.ts
 var import_node_sql_parser = require("node-sql-parser");
-var parserCache = /* @__PURE__ */ new Map();
-function getParser(dialect) {
-  if (!parserCache.has(dialect)) {
-    parserCache.set(dialect, new import_node_sql_parser.Parser());
-  }
-  return parserCache.get(dialect);
-}
 function parseSQL(sql, options = { dialect: "mysql" }) {
   if (!sql || typeof sql !== "string") {
     throw new Error("SQL string is required and must be a string");
   }
   try {
-    const parser = getParser(options.dialect);
-    const processedSql = sql.trim().replace(/\s+/g, " ").replace(/;\s*;/g, ";");
+    const parser = new import_node_sql_parser.Parser();
+    const processedSql = sql.trim().replace(/\s+/g, " ").replace(/;[\s;]*;/g, ";");
     const ast = parser.astify(processedSql, { database: options.dialect });
     if (!ast) {
       throw new Error("Failed to parse SQL: AST is null or undefined");
@@ -827,7 +143,7 @@ var SQLParser = class {
                   if (v.value) {
                     value = v.value;
                   } else if (v.raw) {
-                    value = v.raw;
+                    value = String(v.raw);
                   } else {
                     value = String(v);
                   }
@@ -882,19 +198,18 @@ var SQLParser = class {
         db.tables.push(this.parseTable(node));
       }
     }
-    db.tablesMap = {};
-    for (const table of db.tables) {
-      if (table.name) {
-        db.tablesMap[table.name] = table;
-      }
-    }
+    db.tablesMap = Object.fromEntries(
+      db.tables.filter((t) => t.name).map((t) => [t.name, t])
+    );
     return db;
   }
   /**
    * 类型守卫：判断是否为 CREATE TABLE 语句
    */
   isCreateTable(node) {
-    return node.type === "create" && node.keyword === "table";
+    if (!node || typeof node !== "object") return false;
+    const n = node;
+    return n.type === "create" && n.keyword === "table";
   }
   /**
    * 解析单表 AST -> TableSchema
@@ -1065,37 +380,661 @@ var SQLParser = class {
    * 使用 sqlify 确保函数/表达式被正确序列化
    */
   parseDefault(def) {
-    var _a, _b, _c, _d, _e, _f, _g;
-    if (((_a = def.value) == null ? void 0 : _a.type) === "null" || def.value === null) {
+    var _a, _b;
+    const val = def.value;
+    if ((val == null ? void 0 : val.type) === "null" || val === null) {
       return null;
     }
     try {
-      return this.parser.sqlify(def.value);
-    } catch (error) {
-      if (((_b = def.value) == null ? void 0 : _b.type) === "function") {
-        if ((_e = (_d = (_c = def.value.name) == null ? void 0 : _c.name) == null ? void 0 : _d[0]) == null ? void 0 : _e.value) {
-          return def.value.name.name[0].value;
+      return this.parser.sqlify(val);
+    } catch (e) {
+      if ((val == null ? void 0 : val.type) === "function") {
+        const name = val.name;
+        const firstName = name == null ? void 0 : name.name;
+        if ((_a = firstName == null ? void 0 : firstName[0]) == null ? void 0 : _a.value) {
+          return String(firstName[0].value);
         }
       }
-      return String((_g = (_f = def.value) == null ? void 0 : _f.value) != null ? _g : def.value);
+      const inner = val;
+      return String((_b = inner == null ? void 0 : inner.value) != null ? _b : val);
     }
   }
 };
 
-// src/cli/generate.ts
-init_generator();
+// src/generator/base.ts
+var AGenerator = class {
+  constructor() {
+    this._needsTime = null;
+  }
+  /**
+   * 格式化类型名称（如驼峰命名、帕斯卡命名等）
+   */
+  formatTypeName(name) {
+    return name.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join("");
+  }
+  /**
+   * 格式化字段名称
+   */
+  formatFieldNamePascalCase(name) {
+    return name.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join("");
+  }
+  formatFieldName(name) {
+    return this.formatFieldNamePascalCase(name);
+  }
+  /**
+   * 生成默认值
+   */
+  generateDefaultValue(column) {
+    if (!column.default) {
+      return "";
+    }
+    return column.default;
+  }
+  needsTimeImport(database) {
+    if (this._needsTime !== null) return this._needsTime;
+    for (const table of database.tables) {
+      for (const column of table.columns) {
+        if (column.type.kind === "date" || column.type.kind === "datetime") {
+          this._needsTime = true;
+          return true;
+        }
+      }
+    }
+    this._needsTime = false;
+    return false;
+  }
+};
+var GeneratorFactory = class {
+  static register(language, constructor) {
+    this.registry[language] = constructor;
+  }
+  static createGenerator(language, options = { language }) {
+    const Generator = this.registry[language];
+    if (!Generator) {
+      throw new Error(`Unsupported language: ${language}`);
+    }
+    return new Generator(options);
+  }
+};
+GeneratorFactory.registry = {};
+
+// src/generator/TypeScriptGenerator.ts
+var TypeScriptGenerator = class extends AGenerator {
+  constructor(options = { language: "typescript" }) {
+    super();
+    this.options = options;
+  }
+  /**
+   * 格式化字段名称（使用驼峰命名）
+   */
+  formatFieldName(name) {
+    return name.split("_").map((part, index) => {
+      if (index === 0) {
+        return part.toLowerCase();
+      }
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    }).join("");
+  }
+  /**
+   * 生成整个数据库模式的类型定义
+   */
+  generateDatabase(database) {
+    let result = `// Database: ${database.name}
+`;
+    result += `// Dialect: ${database.dialect}
+
+`;
+    for (const table of database.tables) {
+      result += this.generateTable(table);
+      result += "\n";
+    }
+    return result;
+  }
+  /**
+   * 生成单个表的类型定义
+   */
+  generateTable(table) {
+    let result = `// ${table.name} \u8868\u7ED3\u6784
+`;
+    result += `export interface ${this.formatTypeName(table.name)} {
+`;
+    for (const column of table.columns) {
+      result += this.generateColumn(column);
+    }
+    result += "}\n";
+    return result;
+  }
+  /**
+   * 生成列的类型定义
+   */
+  generateColumn(column) {
+    const fieldName = this.formatFieldName(column.name);
+    const typeName = this.mapSQLType(column.type, column.name);
+    const optional = column.nullable ? "?" : "";
+    let result = `	${fieldName}${optional}: ${typeName}`;
+    if (column.comment && this.options.generateComments !== false) {
+      result += `; // ${column.comment}`;
+    }
+    result += "\n";
+    return result;
+  }
+  /**
+   * 映射 SQL 类型到 TypeScript 类型
+   */
+  mapSQLType(type, columnName) {
+    switch (type.kind) {
+      case "int":
+      case "bigint":
+        return "number";
+      case "float":
+      case "decimal":
+        return "number";
+      case "varchar":
+      case "text":
+        return "string";
+      case "boolean":
+        return "boolean";
+      case "date":
+      case "datetime":
+        return "Date";
+      case "json":
+        return "unknown";
+      case "enum":
+        if (type.values && type.values.length > 0) {
+          const enumValues = type.values.map((v) => `'${v}'`).join(" | ");
+          if (columnName) {
+            const fieldName = this.formatFieldName(columnName);
+            return `${fieldName}: ${enumValues}`;
+          }
+          return enumValues;
+        }
+        return "string";
+      default:
+        return "string";
+    }
+  }
+};
+
+// src/generator/GolangGenerator.ts
+var GolangGenerator = class extends AGenerator {
+  constructor(options = { language: "go" }) {
+    super();
+    this.options = options;
+  }
+  /**
+   * 生成整个数据库模式的类型定义
+   */
+  generateDatabase(database) {
+    let result = `// Database: ${database.name}
+`;
+    result += `// Dialect: ${database.dialect}
+
+`;
+    if (this.options.namespace) {
+      result += `package ${this.options.namespace}
+
+`;
+    }
+    if (this.needsTimeImport(database)) {
+      result += `import "time"
+
+`;
+    }
+    for (const table of database.tables) {
+      result += this.generateTable(table);
+      result += "\n";
+    }
+    return result;
+  }
+  /**
+   * 生成单个表的类型定义
+   */
+  generateTable(table) {
+    let result = `// ${table.name} \u8868\u7ED3\u6784
+`;
+    result += `type ${this.formatTypeName(table.name)} struct {
+`;
+    for (const column of table.columns) {
+      result += this.generateColumn(column);
+    }
+    result += "}\n";
+    return result;
+  }
+  /**
+   * 生成列的类型定义
+   */
+  generateColumn(column) {
+    const fieldName = this.formatFieldName(column.name);
+    const typeName = this.mapSQLType(column.type);
+    const tag = this.generateGoTag(column);
+    let result = `	${fieldName} ${typeName} ${tag}`;
+    if (column.comment && this.options.generateComments !== false) {
+      result += ` // ${column.comment}`;
+    }
+    result += "\n";
+    return result;
+  }
+  /**
+   * 映射 SQL 类型到 Go 类型
+   */
+  mapSQLType(type) {
+    switch (type.kind) {
+      case "int":
+        return "int";
+      case "bigint":
+        return "int64";
+      case "float":
+        return "float64";
+      case "decimal":
+        return "float64";
+      case "varchar":
+      case "text":
+        return "string";
+      case "boolean":
+        return "bool";
+      case "date":
+      case "datetime":
+        return "time.Time";
+      case "json":
+        return "interface{}";
+      case "enum":
+        return "string";
+      default:
+        return "string";
+    }
+  }
+  /**
+   * 生成 Go 结构体标签
+   */
+  generateGoTag(column) {
+    const tags = [];
+    tags.push(`json:"${column.name}"`);
+    tags.push(`db:"${column.name}"`);
+    return `\`${tags.join(" ")}\``;
+  }
+};
+
+// src/generator/GormGenerator.ts
+var GormGenerator = class extends AGenerator {
+  constructor(options = { language: "gorm" }) {
+    super();
+    this.options = options;
+  }
+  /**
+   * 生成整个数据库模式的类型定义
+   */
+  generateDatabase(database) {
+    let result = `// Database: ${database.name}
+`;
+    result += `// Dialect: ${database.dialect}
+
+`;
+    if (this.options.namespace) {
+      result += `package ${this.options.namespace}
+
+`;
+    }
+    if (this.needsTimeImport(database)) {
+      result += `import "time"
+
+`;
+    }
+    for (const table of database.tables) {
+      result += this.generateTable(table);
+      result += "\n";
+    }
+    return result;
+  }
+  /**
+   * 生成单个表的类型定义
+   */
+  generateTable(table) {
+    let result = `// ${table.name} \u8868\u7ED3\u6784
+`;
+    result += `type ${this.formatTypeName(table.name)} struct {
+`;
+    for (const column of table.columns) {
+      result += this.generateColumn(column);
+    }
+    result += "}\n";
+    return result;
+  }
+  /**
+   * 生成列的类型定义
+   */
+  generateColumn(column) {
+    const fieldName = this.formatFieldName(column.name);
+    const typeName = this.mapSQLType(column.type);
+    const tag = this.generateGormTag(column);
+    let result = `	${fieldName} ${typeName} ${tag}`;
+    if (column.comment && this.options.generateComments !== false) {
+      result += ` // ${column.comment}`;
+    }
+    result += "\n";
+    return result;
+  }
+  /**
+   * 映射 SQL 类型到 GORM 类型
+   */
+  mapSQLType(type) {
+    switch (type.kind) {
+      case "int":
+        return "int";
+      case "bigint":
+        return "int64";
+      case "float":
+        return "float64";
+      case "decimal":
+        return "float64";
+      case "varchar":
+      case "text":
+        return "string";
+      case "boolean":
+        return "bool";
+      case "date":
+      case "datetime":
+        return "time.Time";
+      case "json":
+        return "interface{}";
+      case "enum":
+        return "string";
+      default:
+        return "string";
+    }
+  }
+  /**
+   * 生成 GORM 结构体标签
+   */
+  generateGormTag(column) {
+    const tags = [];
+    tags.push(`column:${column.name}`);
+    let typeTag = "type:";
+    switch (column.type.kind) {
+      case "int":
+        typeTag += "int";
+        if (column.type.length) {
+          typeTag += `(${column.type.length})`;
+        }
+        break;
+      case "bigint":
+        typeTag += "bigint";
+        if (column.type.length) {
+          typeTag += `(${column.type.length})`;
+        }
+        break;
+      case "float":
+        typeTag += "float";
+        if (column.type.precision) {
+          typeTag += `(${column.type.precision}`;
+          if (column.type.scale) {
+            typeTag += `,${column.type.scale}`;
+          }
+          typeTag += ")";
+        }
+        break;
+      case "decimal":
+        typeTag += "decimal";
+        if (column.type.precision) {
+          typeTag += `(${column.type.precision}`;
+          if (column.type.scale) {
+            typeTag += `,${column.type.scale}`;
+          }
+          typeTag += ")";
+        }
+        break;
+      case "varchar":
+        typeTag += "varchar";
+        if (column.type.length) {
+          typeTag += `(${column.type.length})`;
+        }
+        break;
+      case "text":
+        typeTag += "text";
+        break;
+      case "boolean":
+        typeTag += "bool";
+        break;
+      case "date":
+        typeTag += "date";
+        break;
+      case "datetime":
+        typeTag += "datetime";
+        break;
+      case "json":
+        typeTag += "json";
+        break;
+      case "enum":
+        typeTag += "enum";
+        break;
+      default:
+        typeTag += "string";
+    }
+    tags.push(typeTag);
+    if (column.primaryKey) {
+      tags.push("primaryKey");
+    }
+    if (column.unique) {
+      tags.push("unique");
+    }
+    if (!column.nullable) {
+      tags.push("not null");
+    }
+    if (column.default) {
+      tags.push(`default:${column.default}`);
+    }
+    if (column.generated) {
+      tags.push("autoIncrement");
+    }
+    if (column.comment) {
+      tags.push(`comment:${column.comment}`);
+    }
+    return `\`gorm:"${tags.join(";")}" json:"${column.name}"\``;
+  }
+};
+
+// src/generator/XormGenerator.ts
+var XormGenerator = class extends AGenerator {
+  constructor(options = { language: "xorm" }) {
+    super();
+    this.options = options;
+  }
+  /**
+   * 生成整个数据库模式的类型定义
+   */
+  generateDatabase(database) {
+    let result = `// Database: ${database.name}
+`;
+    result += `// Dialect: ${database.dialect}
+
+`;
+    if (this.options.namespace) {
+      result += `package ${this.options.namespace}
+
+`;
+    }
+    if (this.needsTimeImport(database)) {
+      result += `import "time"
+
+`;
+    }
+    for (const table of database.tables) {
+      result += this.generateTable(table);
+      result += "\n";
+    }
+    return result;
+  }
+  /**
+   * 生成单个表的类型定义
+   */
+  generateTable(table) {
+    let result = `// ${table.name} \u8868\u7ED3\u6784
+`;
+    result += `type ${this.formatTypeName(table.name)} struct {
+`;
+    for (const column of table.columns) {
+      result += this.generateColumn(column);
+    }
+    result += "}\n";
+    return result;
+  }
+  /**
+   * 生成列的类型定义
+   */
+  generateColumn(column) {
+    const fieldName = this.formatFieldName(column.name);
+    const typeName = this.mapSQLType(column.type);
+    const tag = this.generateXormTag(column);
+    let result = `	${fieldName} ${typeName} ${tag}`;
+    if (column.comment && this.options.generateComments !== false) {
+      result += ` // ${column.comment}`;
+    }
+    result += "\n";
+    return result;
+  }
+  /**
+   * 映射 SQL 类型到 XORM 类型
+   */
+  mapSQLType(type) {
+    switch (type.kind) {
+      case "int":
+        return "int";
+      case "bigint":
+        return "int64";
+      case "float":
+        return "float64";
+      case "decimal":
+        return "float64";
+      case "varchar":
+      case "text":
+        return "string";
+      case "boolean":
+        return "bool";
+      case "date":
+      case "datetime":
+        return "time.Time";
+      case "json":
+        return "interface{}";
+      case "enum":
+        return "string";
+      default:
+        return "string";
+    }
+  }
+  /**
+   * 生成 XORM 结构体标签
+   */
+  generateXormTag(column) {
+    const tags = [];
+    tags.push(`${column.name}`);
+    let typeTag = "";
+    switch (column.type.kind) {
+      case "int":
+        typeTag = "int";
+        if (column.type.length) {
+          typeTag += `(${column.type.length})`;
+        }
+        break;
+      case "bigint":
+        typeTag = "bigint";
+        if (column.type.length) {
+          typeTag += `(${column.type.length})`;
+        }
+        break;
+      case "float":
+        typeTag = "float";
+        if (column.type.precision) {
+          typeTag += `(${column.type.precision}`;
+          if (column.type.scale) {
+            typeTag += `,${column.type.scale}`;
+          }
+          typeTag += ")";
+        }
+        break;
+      case "decimal":
+        typeTag = "decimal";
+        if (column.type.precision) {
+          typeTag += `(${column.type.precision}`;
+          if (column.type.scale) {
+            typeTag += `,${column.type.scale}`;
+          }
+          typeTag += ")";
+        }
+        break;
+      case "varchar":
+        typeTag = "varchar";
+        if (column.type.length) {
+          typeTag += `(${column.type.length})`;
+        }
+        break;
+      case "text":
+        typeTag = "text";
+        break;
+      case "boolean":
+        typeTag = "bool";
+        break;
+      case "date":
+        typeTag = "date";
+        break;
+      case "datetime":
+        typeTag = "datetime";
+        break;
+      case "json":
+        typeTag = "json";
+        break;
+      case "enum":
+        typeTag = "enum";
+        break;
+      default:
+        typeTag = "string";
+    }
+    if (typeTag) {
+      tags.push(typeTag);
+    }
+    if (column.primaryKey) {
+      tags.push("pk");
+    }
+    if (column.unique) {
+      tags.push("unique");
+    }
+    if (!column.nullable) {
+      tags.push("notnull");
+    }
+    if (column.default) {
+      tags.push(`default(${column.default})`);
+    }
+    if (column.generated) {
+      tags.push("autoincr");
+    }
+    if (column.comment) {
+      tags.push(`comment(${column.comment})`);
+    }
+    return `\`xorm:"${tags.join(" ")}" json:"${column.name}"\``;
+  }
+};
+
+// src/generator/index.ts
+GeneratorFactory.register("typescript", TypeScriptGenerator);
+GeneratorFactory.register("go", GolangGenerator);
+GeneratorFactory.register("gorm", GormGenerator);
+GeneratorFactory.register("xorm", XormGenerator);
+
+// src/cli/output.ts
 var fs = __toESM(require("fs"));
 var path = __toESM(require("path"));
+
+// src/constants.ts
+var LANGUAGES = ["go", "typescript", "gorm", "xorm"];
+var MODES = ["single", "multi"];
 var LANGUAGE_EXTENSIONS = {
   typescript: ".ts",
   go: ".go",
   gorm: ".go",
   xorm: ".go"
 };
-var VALID_LANGUAGES = ["go", "typescript", "gorm", "xorm"];
-var VALID_MODES = ["single", "multi"];
-var DEFAULT_NAMESPACE = "models";
 var LANGUAGES_REQUIRING_NAMESPACE = ["go", "gorm", "xorm"];
+var DEFAULT_NAMESPACE = "models";
+
+// src/cli/output.ts
 function addCommonGenerateOptions(command) {
   return command.option("-o, --output <dir>", "Output directory", "./output").option(
     "-l, --language <lang>",
@@ -1110,18 +1049,16 @@ function addCommonGenerateOptions(command) {
     "mysql"
   ).option("--db-name <name>", "Database name", "my_database");
 }
-async function generateCode(sql, options) {
-  if (!VALID_LANGUAGES.includes(options.language)) {
-    console.error(
-      `Error: Invalid language: ${options.language}. Valid options: ${VALID_LANGUAGES.join(", ")}`
+async function generateCodeToFiles(sql, options) {
+  if (!LANGUAGES.includes(options.language)) {
+    throw new Error(
+      `Invalid language: ${options.language}. Valid options: ${LANGUAGES.join(", ")}`
     );
-    process.exit(1);
   }
-  if (!VALID_MODES.includes(options.mode)) {
-    console.error(
-      `Error: Invalid mode: ${options.mode}. Valid options: ${VALID_MODES.join(", ")}`
+  if (!MODES.includes(options.mode)) {
+    throw new Error(
+      `Invalid mode: ${options.mode}. Valid options: ${MODES.join(", ")}`
     );
-    process.exit(1);
   }
   const needsNamespace = LANGUAGES_REQUIRING_NAMESPACE.includes(
     options.language
@@ -1139,16 +1076,10 @@ async function generateCode(sql, options) {
     namespace: options.namespace,
     generateComments: true
   };
-  let generator;
-  try {
-    generator = await GeneratorFactory.createGenerator(
-      options.language,
-      generatorOptions
-    );
-  } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
-  }
+  const generator = GeneratorFactory.createGenerator(
+    options.language,
+    generatorOptions
+  );
   const outputDir = path.resolve(options.output);
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -1178,8 +1109,8 @@ async function generateCode(sql, options) {
   console.log("Done!");
 }
 
-// src/cli/generate-sql.ts
-async function commandGenerateSqlString(program2) {
+// src/cli/sql-command.ts
+function commandGenerateSqlString(program2) {
   const command = program2.command("sql").description("Generate code from SQL string").requiredOption("-s, --sql <sql>", "SQL string is required").option(
     "-m, --mode <mode>",
     "Output mode: single (one file) or multi (one file per table)",
@@ -1189,7 +1120,7 @@ async function commandGenerateSqlString(program2) {
   command.action(async (options) => {
     try {
       console.log("Using provided SQL string");
-      await generateCode(options.sql, {
+      await generateCodeToFiles(options.sql, {
         output: options.output,
         language: options.language,
         mode: options.mode,
@@ -1204,9 +1135,9 @@ async function commandGenerateSqlString(program2) {
   });
 }
 
-// src/cli/generate-db.ts
+// src/cli/db-command.ts
 var import_promise = __toESM(require("mysql2/promise"));
-async function commandGenerateDb(program2) {
+function commandGenerateDb(program2) {
   const command = program2.command("db").description("Generate code from database connection").option("-h, --host <host>", "MySQL database host", "127.0.0.1").option(
     "-P, --port <port>",
     "MySQL database port",
@@ -1215,6 +1146,7 @@ async function commandGenerateDb(program2) {
   ).option("-u, --user <user>", "MySQL database username", "root").option("-p, --password <password>", "MySQL database password", "").option("-d, --database <database>", "MySQL database name", "test");
   addCommonGenerateOptions(command);
   command.action(async (options) => {
+    var _a;
     let connection = null;
     try {
       const connectionOptions = {
@@ -1230,7 +1162,8 @@ async function commandGenerateDb(program2) {
       connection = await import_promise.default.createConnection(connectionOptions);
       console.log("Connected to database successfully");
       const [tablesResult] = await connection.execute("SHOW TABLES");
-      const tables = tablesResult.map(
+      const rows = tablesResult;
+      const tables = rows.map(
         (row) => Object.values(row)[0]
       );
       console.log(`Found ${tables.length} tables: ${tables.join(", ")}`);
@@ -1240,18 +1173,16 @@ async function commandGenerateDb(program2) {
       if (needsNamespace && !options.namespace) {
         options.namespace = DEFAULT_NAMESPACE;
       }
-      let successCount = 0;
-      let failCount = 0;
-      const failedTables = [];
-      for (const tableName of tables) {
-        console.log(`Processing table: ${tableName}`);
-        try {
+      const results = await Promise.allSettled(
+        tables.map(async (tableName) => {
+          var _a2;
+          console.log(`Processing table: ${tableName}`);
           const [result] = await connection.execute(
             `SHOW CREATE TABLE \`${tableName}\``
           );
-          const row = result[0];
-          const createTableSql = row["Create Table"];
-          await generateCode(createTableSql, {
+          const resultRows = result;
+          const createTableSql = (_a2 = resultRows[0]) == null ? void 0 : _a2["Create Table"];
+          await generateCodeToFiles(createTableSql, {
             output: options.output,
             language: options.language,
             mode: "multi",
@@ -1259,19 +1190,24 @@ async function commandGenerateDb(program2) {
             dialect: options.dialect,
             dbName: options.dbName || options.database
           });
+        })
+      );
+      let successCount = 0;
+      const failedTables = [];
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].status === "fulfilled") {
           successCount++;
-        } catch (error) {
+        } else {
+          failedTables.push(tables[i]);
           console.error(
-            `Failed to process table '${tableName}':`,
-            error.message
+            `Failed to process table '${tables[i]}':`,
+            ((_a = results[i].reason) == null ? void 0 : _a.message) || "Unknown error"
           );
-          failCount++;
-          failedTables.push(tableName);
         }
       }
       console.log(
         `
-Summary: ${successCount} tables succeeded, ${failCount} tables failed`
+Summary: ${successCount} tables succeeded, ${failedTables.length} tables failed`
       );
       if (failedTables.length > 0) {
         console.log(`Failed tables: ${failedTables.join(", ")}`);

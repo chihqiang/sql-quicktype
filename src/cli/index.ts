@@ -1,7 +1,7 @@
-export { addCommonGenerateOptions, generateCode } from './generate';
+export { addCommonGenerateOptions, generateCodeToFiles } from './output';
 
-export type { GenerateOptions } from './generate';
+export type { GenerateOptions, Language, Mode } from './output';
 
-export { commandGenerateSqlString } from './generate-sql';
+export { commandGenerateSqlString } from './sql-command';
 
-export { commandGenerateDb } from './generate-db';
+export { commandGenerateDb } from './db-command';

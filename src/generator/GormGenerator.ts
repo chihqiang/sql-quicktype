@@ -1,5 +1,5 @@
 import { DatabaseSchema, TableSchema, ColumnSchema, SQLType } from '../schema';
-import { AGenerator, Options } from './generator';
+import { AGenerator, Options } from './base';
 
 /**
  * GORM 语言生成器
