@@ -339,7 +339,7 @@ console.log(gormCode);
 
 **返回值：**
 
-- `AGenerator`: 生成器实例
+- `BaseGenerator`: 生成器基类
 
 ### readSQLFromFile(path)
 

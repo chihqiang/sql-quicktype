@@ -1,11 +1,11 @@
 import { DatabaseSchema, TableSchema, ColumnSchema, SQLType } from '../schema';
-import { AGenerator, Options } from './base';
+import { BaseGenerator, Options } from './base';
 
 /**
  * XORM 语言生成器
  * 生成符合 XORM 规范的类型定义
  */
-export class XormGenerator extends AGenerator {
+export class XormGenerator extends BaseGenerator {
   private options: Options;
 
   constructor(options: Options = { language: 'xorm' }) {

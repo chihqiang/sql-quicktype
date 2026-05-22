@@ -1,11 +1,11 @@
 import { DatabaseSchema, TableSchema, ColumnSchema, SQLType } from '../schema';
-import { AGenerator, Options } from './base';
+import { BaseGenerator, Options } from './base';
 
 /**
  * GORM 语言生成器
  * 生成符合 GORM 规范的类型定义
  */
-export class GormGenerator extends AGenerator {
+export class GormGenerator extends BaseGenerator {
   private options: Options;
 
   constructor(options: Options = { language: 'gorm' }) {

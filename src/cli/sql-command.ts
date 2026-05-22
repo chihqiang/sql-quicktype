@@ -9,7 +9,7 @@
 import { Command } from 'commander';
 import { generateCodeToFiles, addCommonGenerateOptions } from './output';
 
-export function commandGenerateSqlString(program: Command) {
+export function sqlCommand(program: Command) {
   const command = program
     .command('sql')
     .description('Generate code from SQL string')

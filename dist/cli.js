@@ -402,9 +402,9 @@ var SQLParser = class {
 };
 
 // src/generator/base.ts
-var AGenerator = class {
+var BaseGenerator = class {
   constructor() {
-    this._needsTime = null;
+    this.needsTimeCache = null;
   }
   /**
    * 格式化类型名称（如驼峰命名、帕斯卡命名等）
@@ -415,11 +415,11 @@ var AGenerator = class {
   /**
    * 格式化字段名称
    */
-  formatFieldNamePascalCase(name) {
+  formatPascalCase(name) {
     return name.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join("");
   }
   formatFieldName(name) {
-    return this.formatFieldNamePascalCase(name);
+    return this.formatPascalCase(name);
   }
   /**
    * 生成默认值
@@ -431,16 +431,16 @@ var AGenerator = class {
     return column.default;
   }
   needsTimeImport(database) {
-    if (this._needsTime !== null) return this._needsTime;
+    if (this.needsTimeCache !== null) return this.needsTimeCache;
     for (const table of database.tables) {
       for (const column of table.columns) {
         if (column.type.kind === "date" || column.type.kind === "datetime") {
-          this._needsTime = true;
+          this.needsTimeCache = true;
           return true;
         }
       }
     }
-    this._needsTime = false;
+    this.needsTimeCache = false;
     return false;
   }
 };
@@ -458,8 +458,8 @@ var GeneratorFactory = class {
 };
 GeneratorFactory.registry = {};
 
-// src/generator/TypeScriptGenerator.ts
-var TypeScriptGenerator = class extends AGenerator {
+// src/generator/typescript-generator.ts
+var TypeScriptGenerator = class extends BaseGenerator {
   constructor(options = { language: "typescript" }) {
     super();
     this.options = options;
@@ -555,8 +555,8 @@ var TypeScriptGenerator = class extends AGenerator {
   }
 };
 
-// src/generator/GolangGenerator.ts
-var GolangGenerator = class extends AGenerator {
+// src/generator/go-generator.ts
+var GoGenerator = class extends BaseGenerator {
   constructor(options = { language: "go" }) {
     super();
     this.options = options;
@@ -654,8 +654,8 @@ var GolangGenerator = class extends AGenerator {
   }
 };
 
-// src/generator/GormGenerator.ts
-var GormGenerator = class extends AGenerator {
+// src/generator/gorm-generator.ts
+var GormGenerator = class extends BaseGenerator {
   constructor(options = { language: "gorm" }) {
     super();
     this.options = options;
@@ -832,8 +832,8 @@ var GormGenerator = class extends AGenerator {
   }
 };
 
-// src/generator/XormGenerator.ts
-var XormGenerator = class extends AGenerator {
+// src/generator/xorm-generator.ts
+var XormGenerator = class extends BaseGenerator {
   constructor(options = { language: "xorm" }) {
     super();
     this.options = options;
@@ -1014,7 +1014,7 @@ var XormGenerator = class extends AGenerator {
 
 // src/generator/index.ts
 GeneratorFactory.register("typescript", TypeScriptGenerator);
-GeneratorFactory.register("go", GolangGenerator);
+GeneratorFactory.register("go", GoGenerator);
 GeneratorFactory.register("gorm", GormGenerator);
 GeneratorFactory.register("xorm", XormGenerator);
 
@@ -1110,7 +1110,7 @@ async function generateCodeToFiles(sql, options) {
 }
 
 // src/cli/sql-command.ts
-function commandGenerateSqlString(program2) {
+function sqlCommand(program2) {
   const command = program2.command("sql").description("Generate code from SQL string").requiredOption("-s, --sql <sql>", "SQL string is required").option(
     "-m, --mode <mode>",
     "Output mode: single (one file) or multi (one file per table)",
@@ -1137,7 +1137,7 @@ function commandGenerateSqlString(program2) {
 
 // src/cli/db-command.ts
 var import_promise = __toESM(require("mysql2/promise"));
-function commandGenerateDb(program2) {
+function dbCommand(program2) {
   const command = program2.command("db").description("Generate code from database connection").option("-h, --host <host>", "MySQL database host", "127.0.0.1").option(
     "-P, --port <port>",
     "MySQL database port",
@@ -1233,6 +1233,6 @@ var version = "0.0.1";
 // src/cli.ts
 var program = new import_commander.Command();
 program.name("sql-quicktype").description("Generate code from SQL schema definitions").version(version);
-commandGenerateSqlString(program);
-commandGenerateDb(program);
+sqlCommand(program);
+dbCommand(program);
 program.parse();

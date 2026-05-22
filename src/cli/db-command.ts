@@ -11,7 +11,7 @@ import { generateCodeToFiles, addCommonGenerateOptions } from './output';
 import { DEFAULT_NAMESPACE, LANGUAGES_REQUIRING_NAMESPACE } from '../constants';
 import mysql, { RowDataPacket } from 'mysql2/promise';
 
-export function commandGenerateDb(program: Command) {
+export function dbCommand(program: Command) {
   const command = program
     .command('db')
     .description('Generate code from database connection')

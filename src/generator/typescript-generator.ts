@@ -1,11 +1,11 @@
 import { ColumnSchema, DatabaseSchema, SQLType, TableSchema } from '../schema';
-import { AGenerator, Options } from './base';
+import { BaseGenerator, Options } from './base';
 
 /**
  * TypeScript 语言生成器
  * 生成符合 TypeScript 规范的类型定义
  */
-export class TypeScriptGenerator extends AGenerator {
+export class TypeScriptGenerator extends BaseGenerator {
   private options: Options;
   constructor(options: Options = { language: 'typescript' }) {
     super();

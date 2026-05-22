@@ -25,7 +25,7 @@ export interface Options {
  * 语言生成器基类
  * 定义了生成不同语言类型的通用接口和方法
  */
-export abstract class AGenerator {
+export abstract class BaseGenerator {
   /**
    * 生成整个数据库模式的类型定义
    */
@@ -59,7 +59,7 @@ export abstract class AGenerator {
   /**
    * 格式化字段名称
    */
-  protected formatFieldNamePascalCase(name: string): string {
+  protected formatPascalCase(name: string): string {
     return name
       .split('_')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
@@ -67,7 +67,7 @@ export abstract class AGenerator {
   }
 
   protected formatFieldName(name: string): string {
-    return this.formatFieldNamePascalCase(name);
+    return this.formatPascalCase(name);
   }
 
   /**
@@ -80,19 +80,19 @@ export abstract class AGenerator {
     return column.default;
   }
 
-  private _needsTime: boolean | null = null;
+  private needsTimeCache: boolean | null = null;
 
   protected needsTimeImport(database: DatabaseSchema): boolean {
-    if (this._needsTime !== null) return this._needsTime;
+    if (this.needsTimeCache !== null) return this.needsTimeCache;
     for (const table of database.tables) {
       for (const column of table.columns) {
         if (column.type.kind === 'date' || column.type.kind === 'datetime') {
-          this._needsTime = true;
+          this.needsTimeCache = true;
           return true;
         }
       }
     }
-    this._needsTime = false;
+    this.needsTimeCache = false;
     return false;
   }
 }
@@ -102,16 +102,16 @@ export abstract class AGenerator {
  * 用于创建不同语言的生成器实例
  */
 export class GeneratorFactory {
-  private static registry: Record<string, new (options: Options) => AGenerator> = {};
+  private static registry: Record<string, new (options: Options) => BaseGenerator> = {};
 
-  static register(language: string, constructor: new (options: Options) => AGenerator) {
+  static register(language: string, constructor: new (options: Options) => BaseGenerator) {
     this.registry[language] = constructor;
   }
 
   static createGenerator(
     language: Language,
     options: Options = { language }
-  ): AGenerator {
+  ): BaseGenerator {
     const Generator = this.registry[language];
     if (!Generator) {
       throw new Error(`Unsupported language: ${language}`);

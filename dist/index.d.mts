@@ -170,25 +170,25 @@ interface Options {
     generateComments?: boolean;
     namespace?: string;
 }
-declare abstract class AGenerator {
+declare abstract class BaseGenerator {
     abstract generateDatabase(database: DatabaseSchema): string;
     abstract generateTable(table: TableSchema): string;
     abstract generateColumn(column: ColumnSchema): string;
     abstract mapSQLType(type: SQLType): string;
     protected formatTypeName(name: string): string;
-    protected formatFieldNamePascalCase(name: string): string;
+    protected formatPascalCase(name: string): string;
     protected formatFieldName(name: string): string;
     protected generateDefaultValue(column: ColumnSchema): string;
-    private _needsTime;
+    private needsTimeCache;
     protected needsTimeImport(database: DatabaseSchema): boolean;
 }
 declare class GeneratorFactory {
     private static registry;
-    static register(language: string, constructor: new (options: Options) => AGenerator): void;
-    static createGenerator(language: Language, options?: Options): AGenerator;
+    static register(language: string, constructor: new (options: Options) => BaseGenerator): void;
+    static createGenerator(language: Language, options?: Options): BaseGenerator;
 }
 
-declare class TypeScriptGenerator extends AGenerator {
+declare class TypeScriptGenerator extends BaseGenerator {
     private options;
     constructor(options?: Options);
     protected formatFieldName(name: string): string;
@@ -198,7 +198,7 @@ declare class TypeScriptGenerator extends AGenerator {
     mapSQLType(type: SQLType, columnName?: string): string;
 }
 
-declare class GolangGenerator extends AGenerator {
+declare class GoGenerator extends BaseGenerator {
     private options;
     constructor(options?: Options);
     generateDatabase(database: DatabaseSchema): string;
@@ -208,7 +208,7 @@ declare class GolangGenerator extends AGenerator {
     private generateGoTag;
 }
 
-declare class GormGenerator extends AGenerator {
+declare class GormGenerator extends BaseGenerator {
     private options;
     constructor(options?: Options);
     generateDatabase(database: DatabaseSchema): string;
@@ -218,7 +218,7 @@ declare class GormGenerator extends AGenerator {
     private generateGormTag;
 }
 
-declare class XormGenerator extends AGenerator {
+declare class XormGenerator extends BaseGenerator {
     private options;
     constructor(options?: Options);
     generateDatabase(database: DatabaseSchema): string;
@@ -247,4 +247,4 @@ declare function generateCode(sql: string, options: {
 declare function readSQLFromFile(path: string): Promise<string>;
 declare function readSQLFromString(sql: string): Promise<string>;
 
-export { AGenerator, type BigIntType, type BooleanType, type ColumnSchema, type DatabaseSchema, type DateTimeType, type DateType, type DecimalType, type EnumType, type FloatType, type GenerateOptions, GeneratorFactory, GolangGenerator, GormGenerator, type IntType, type JsonType, SQLParser, type SQLParserOptions, type SQLType, type TableIndex, type TableSchema, type TextType, type TypeResolver, TypeScriptGenerator, type VarcharType, XormGenerator, generateCode, parseSQL, readSQLFromFile, readSQLFromString };
+export { BaseGenerator, type BigIntType, type BooleanType, type ColumnSchema, type DatabaseSchema, type DateTimeType, type DateType, type DecimalType, type EnumType, type FloatType, type GenerateOptions, GeneratorFactory, GoGenerator, GormGenerator, type IntType, type JsonType, SQLParser, type SQLParserOptions, type SQLType, type TableIndex, type TableSchema, type TextType, type TypeResolver, TypeScriptGenerator, type VarcharType, XormGenerator, generateCode, parseSQL, readSQLFromFile, readSQLFromString };

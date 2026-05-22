@@ -120,6 +120,7 @@ export interface ColumnDefinition {
   nullable?: {
     type: string;
   };
+  // node-sql-parser returns these as snake_case
   primary_key?: boolean;
   unique?: boolean;
   default_val?: {

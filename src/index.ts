@@ -40,12 +40,12 @@ export type {
 
 // 导出语言生成器相关的工具和类型
 export {
-  AGenerator,
+  BaseGenerator,
   GeneratorFactory,
   GormGenerator,
   XormGenerator,
   TypeScriptGenerator,
-  GolangGenerator,
+  GoGenerator,
 } from './generator';
 
 // 导出 CLI 相关的类型定义
