@@ -102,9 +102,15 @@ export abstract class BaseGenerator {
  * 用于创建不同语言的生成器实例
  */
 export class GeneratorFactory {
-  private static registry: Record<string, new (options: Options) => BaseGenerator> = {};
+  private static registry: Record<
+    string,
+    new (options: Options) => BaseGenerator
+  > = {};
 
-  static register(language: string, constructor: new (options: Options) => BaseGenerator) {
+  static register(
+    language: string,
+    constructor: new (options: Options) => BaseGenerator
+  ) {
     this.registry[language] = constructor;
   }
 

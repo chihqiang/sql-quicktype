@@ -45,7 +45,10 @@ export function addCommonGenerateOptions(command: Command) {
     .option('--db-name <name>', 'Database name', 'my_database');
 }
 
-export async function generateCodeToFiles(sql: string, options: GenerateOptions) {
+export async function generateCodeToFiles(
+  sql: string,
+  options: GenerateOptions
+) {
   if (!LANGUAGES.includes(options.language)) {
     throw new Error(
       `Invalid language: ${options.language}. Valid options: ${LANGUAGES.join(', ')}`
