@@ -1,4 +1,5 @@
 import { ColumnSchema, DatabaseSchema, SQLType, TableSchema } from '../schema';
+import type { Language } from '../constants';
 
 /**
  * 生成器配置
@@ -7,7 +8,7 @@ export interface Options {
   /**
    * 目标语言
    */
-  language: 'go' | 'typescript' | 'gorm' | 'xorm';
+  language: Language;
 
   /**
    * 是否生成注释（默认 true）
@@ -24,7 +25,7 @@ export interface Options {
  * 语言生成器基类
  * 定义了生成不同语言类型的通用接口和方法
  */
-export abstract class AGenerator {
+export abstract class BaseGenerator {
   /**
    * 生成整个数据库模式的类型定义
    */
@@ -58,13 +59,15 @@ export abstract class AGenerator {
   /**
    * 格式化字段名称
    */
-  protected formatFieldName(name: string): string {
+  protected formatPascalCase(name: string): string {
     return name
       .split('_')
-      .map((part) => {
-        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-      })
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
       .join('');
+  }
+
+  protected formatFieldName(name: string): string {
+    return this.formatPascalCase(name);
   }
 
   /**
@@ -77,17 +80,19 @@ export abstract class AGenerator {
     return column.default;
   }
 
-  /**
-   * 检查是否需要导入 time 包
-   */
+  private needsTimeCache: boolean | null = null;
+
   protected needsTimeImport(database: DatabaseSchema): boolean {
+    if (this.needsTimeCache !== null) return this.needsTimeCache;
     for (const table of database.tables) {
       for (const column of table.columns) {
         if (column.type.kind === 'date' || column.type.kind === 'datetime') {
+          this.needsTimeCache = true;
           return true;
         }
       }
     }
+    this.needsTimeCache = false;
     return false;
   }
 }
@@ -97,31 +102,20 @@ export abstract class AGenerator {
  * 用于创建不同语言的生成器实例
  */
 export class GeneratorFactory {
-  /**
-   * 创建语言生成器实例
-   * @param language 目标语言
-   * @param options 生成器配置选项
-   * @returns 语言生成器实例
-   */
-  static async createGenerator(
-    language: 'go' | 'typescript' | 'gorm' | 'xorm',
+  private static registry: Record<string, new (options: Options) => BaseGenerator> = {};
+
+  static register(language: string, constructor: new (options: Options) => BaseGenerator) {
+    this.registry[language] = constructor;
+  }
+
+  static createGenerator(
+    language: Language,
     options: Options = { language }
-  ) {
-    switch (language) {
-      case 'typescript':
-        const { TypeScriptGenerator } = await import('./TypeScriptGenerator');
-        return new TypeScriptGenerator(options);
-      case 'go':
-        const { GolangGenerator } = await import('./GolangGenerator');
-        return new GolangGenerator(options);
-      case 'gorm':
-        const { GormGenerator } = await import('./GormGenerator');
-        return new GormGenerator(options);
-      case 'xorm':
-        const { XormGenerator } = await import('./XormGenerator');
-        return new XormGenerator(options);
-      default:
-        throw new Error(`Unsupported language: ${language}`);
+  ): BaseGenerator {
+    const Generator = this.registry[language];
+    if (!Generator) {
+      throw new Error(`Unsupported language: ${language}`);
     }
+    return new Generator(options);
   }
 }

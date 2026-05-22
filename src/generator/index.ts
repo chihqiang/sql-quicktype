@@ -1,6 +1,14 @@
-export { AGenerator, GeneratorFactory } from './generator';
+import { TypeScriptGenerator } from './typescript-generator';
+import { GoGenerator } from './go-generator';
+import { GormGenerator } from './gorm-generator';
+import { XormGenerator } from './xorm-generator';
+import { BaseGenerator, GeneratorFactory } from './base';
 
-export { TypeScriptGenerator } from './TypeScriptGenerator';
-export { GolangGenerator } from './GolangGenerator';
-export { GormGenerator } from './GormGenerator';
-export { XormGenerator } from './XormGenerator';
+GeneratorFactory.register('typescript', TypeScriptGenerator);
+GeneratorFactory.register('go', GoGenerator);
+GeneratorFactory.register('gorm', GormGenerator);
+GeneratorFactory.register('xorm', XormGenerator);
+
+export { BaseGenerator, GeneratorFactory };
+export type { Options } from './base';
+export { TypeScriptGenerator, GoGenerator, GormGenerator, XormGenerator };

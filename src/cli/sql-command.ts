@@ -7,16 +7,9 @@
  */
 
 import { Command } from 'commander';
-import { generateCode, addCommonGenerateOptions } from './generate';
+import { generateCodeToFiles, addCommonGenerateOptions } from './output';
 
-/**
- * commandGenerateString
- *
- * Registers the 'generate-string' CLI command.
- *
- * @param program - Commander.js program instance
- */
-export async function commandGenerateSqlString(program: Command) {
+export function sqlCommand(program: Command) {
   const command = program
     .command('sql')
     .description('Generate code from SQL string')
@@ -32,7 +25,7 @@ export async function commandGenerateSqlString(program: Command) {
   command.action(async (options) => {
     try {
       console.log('Using provided SQL string');
-      await generateCode(options.sql, {
+      await generateCodeToFiles(options.sql, {
         output: options.output,
         language: options.language,
         mode: options.mode,

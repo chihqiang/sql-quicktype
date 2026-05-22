@@ -1,11 +1,11 @@
 import { DatabaseSchema, TableSchema, ColumnSchema, SQLType } from '../schema';
-import { AGenerator, Options } from './generator';
+import { BaseGenerator, Options } from './base';
 
 /**
  * Go 语言生成器
  * 生成符合 Go 语言规范的类型定义
  */
-export class GolangGenerator extends AGenerator {
+export class GoGenerator extends BaseGenerator {
   private options: Options;
 
   constructor(options: Options = { language: 'go' }) {

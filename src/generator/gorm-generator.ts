@@ -1,14 +1,14 @@
 import { DatabaseSchema, TableSchema, ColumnSchema, SQLType } from '../schema';
-import { AGenerator, Options } from './generator';
+import { BaseGenerator, Options } from './base';
 
 /**
- * XORM 语言生成器
- * 生成符合 XORM 规范的类型定义
+ * GORM 语言生成器
+ * 生成符合 GORM 规范的类型定义
  */
-export class XormGenerator extends AGenerator {
+export class GormGenerator extends BaseGenerator {
   private options: Options;
 
-  constructor(options: Options = { language: 'xorm' }) {
+  constructor(options: Options = { language: 'gorm' }) {
     super();
     this.options = options;
   }
@@ -59,7 +59,7 @@ export class XormGenerator extends AGenerator {
   generateColumn(column: ColumnSchema): string {
     const fieldName = this.formatFieldName(column.name);
     const typeName = this.mapSQLType(column.type);
-    const tag = this.generateXormTag(column);
+    const tag = this.generateGormTag(column);
 
     let result = `\t${fieldName} ${typeName} ${tag}`;
     if (column.comment && this.options.generateComments !== false) {
@@ -71,7 +71,7 @@ export class XormGenerator extends AGenerator {
   }
 
   /**
-   * 映射 SQL 类型到 XORM 类型
+   * 映射 SQL 类型到 GORM 类型
    */
   mapSQLType(type: SQLType): string {
     switch (type.kind) {
@@ -101,31 +101,31 @@ export class XormGenerator extends AGenerator {
   }
 
   /**
-   * 生成 XORM 结构体标签
+   * 生成 GORM 结构体标签
    */
-  private generateXormTag(column: ColumnSchema): string {
+  private generateGormTag(column: ColumnSchema): string {
     const tags = [];
 
     // 添加 column 标签
-    tags.push(`${column.name}`);
+    tags.push(`column:${column.name}`);
 
     // 添加 type 标签
-    let typeTag = '';
+    let typeTag = 'type:';
     switch (column.type.kind) {
       case 'int':
-        typeTag = 'int';
+        typeTag += 'int';
         if (column.type.length) {
           typeTag += `(${column.type.length})`;
         }
         break;
       case 'bigint':
-        typeTag = 'bigint';
+        typeTag += 'bigint';
         if (column.type.length) {
           typeTag += `(${column.type.length})`;
         }
         break;
       case 'float':
-        typeTag = 'float';
+        typeTag += 'float';
         if (column.type.precision) {
           typeTag += `(${column.type.precision}`;
           if (column.type.scale) {
@@ -135,7 +135,7 @@ export class XormGenerator extends AGenerator {
         }
         break;
       case 'decimal':
-        typeTag = 'decimal';
+        typeTag += 'decimal';
         if (column.type.precision) {
           typeTag += `(${column.type.precision}`;
           if (column.type.scale) {
@@ -145,39 +145,37 @@ export class XormGenerator extends AGenerator {
         }
         break;
       case 'varchar':
-        typeTag = 'varchar';
+        typeTag += 'varchar';
         if (column.type.length) {
           typeTag += `(${column.type.length})`;
         }
         break;
       case 'text':
-        typeTag = 'text';
+        typeTag += 'text';
         break;
       case 'boolean':
-        typeTag = 'bool';
+        typeTag += 'bool';
         break;
       case 'date':
-        typeTag = 'date';
+        typeTag += 'date';
         break;
       case 'datetime':
-        typeTag = 'datetime';
+        typeTag += 'datetime';
         break;
       case 'json':
-        typeTag = 'json';
+        typeTag += 'json';
         break;
       case 'enum':
-        typeTag = 'enum';
+        typeTag += 'enum';
         break;
       default:
-        typeTag = 'string';
+        typeTag += 'string';
     }
-    if (typeTag) {
-      tags.push(typeTag);
-    }
+    tags.push(typeTag);
 
     // 添加 primaryKey 标签
     if (column.primaryKey) {
-      tags.push('pk');
+      tags.push('primaryKey');
     }
 
     // 添加 unique 标签
@@ -187,24 +185,24 @@ export class XormGenerator extends AGenerator {
 
     // 添加 not null 标签
     if (!column.nullable) {
-      tags.push('notnull');
+      tags.push('not null');
     }
 
     // 添加 default 标签
     if (column.default) {
-      tags.push(`default(${column.default})`);
+      tags.push(`default:${column.default}`);
     }
 
     // 添加 autoIncrement 标签
     if (column.generated) {
-      tags.push('autoincr');
+      tags.push('autoIncrement');
     }
 
     // 添加 comment 标签
     if (column.comment) {
-      tags.push(`comment(${column.comment})`);
+      tags.push(`comment:${column.comment}`);
     }
 
-    return `\`xorm:"${tags.join(' ')}" json:"${column.name}"\``;
+    return `\`gorm:"${tags.join(';')}" json:"${column.name}"\``;
   }
 }

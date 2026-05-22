@@ -6,13 +6,14 @@
 
 - **SQL 解析器**：支持解析 MySQL、PostgreSQL、SQLite、SQL Server 等多种数据库方言的 DDL 语句
 - **多语言代码生成**：支持生成 TypeScript、Go、GORM、XORM 等多种语言的类型定义
-- **灵活的数据源**：支持从 SQL 字符串或数据库连接生成代码
+- **灵活的数据源**：支持从 SQL 字符串、文件或数据库连接生成代码
 - **类型安全**：生成的代码包含完整的类型信息，提高代码安全性
 - **注释保留**：自动保留表和列的注释信息
 - **CLI 工具**：提供命令行工具，方便快速生成代码
 - **自定义类型解析器**：支持注入自定义的类型解析器，灵活处理特殊的 SQL 类型
 - **类型属性支持**：支持整数类型的显示宽度、浮点数类型的精度和小数位数
-- **现代化 API**：使用异步 API，支持动态模块导入
+- **同步 API**：生成器采用同步设计，无异步开销，调用简单直接
+- **并发查询**：数据库模式支持 `Promise.allSettled` 并发查询，大幅提升多表生成性能
 - **自动命名空间**：Go/GORM/XORM 语言自动使用默认命名空间 `models`
 
 ## 安装
@@ -84,7 +85,7 @@ const sql = `
 const dbSchema = parseSQL(sql, { dialect: 'mysql', dbName: 'my_database' });
 
 // 生成 TypeScript 代码
-const generator = await GeneratorFactory.createGenerator('typescript');
+const generator = GeneratorFactory.createGenerator('typescript');
 const code = generator.generateDatabase(dbSchema);
 console.log(code);
 ```
@@ -93,26 +94,26 @@ console.log(code);
 
 ```typescript
 // TypeScript
-const tsGenerator = await GeneratorFactory.createGenerator('typescript');
+const tsGenerator = GeneratorFactory.createGenerator('typescript');
 const tsCode = tsGenerator.generateDatabase(dbSchema);
 
 // Go
-const goGenerator = await GeneratorFactory.createGenerator('go');
+const goGenerator = GeneratorFactory.createGenerator('go');
 const goCode = goGenerator.generateDatabase(dbSchema);
 
 // GORM
-const gormGenerator = await GeneratorFactory.createGenerator('gorm');
+const gormGenerator = GeneratorFactory.createGenerator('gorm');
 const gormCode = gormGenerator.generateDatabase(dbSchema);
 
 // XORM
-const xormGenerator = await GeneratorFactory.createGenerator('xorm');
+const xormGenerator = GeneratorFactory.createGenerator('xorm');
 const xormCode = xormGenerator.generateDatabase(dbSchema);
 ```
 
 #### 生成单个表的代码
 
 ```typescript
-const generator = await GeneratorFactory.createGenerator('typescript');
+const generator = GeneratorFactory.createGenerator('typescript');
 const tableCode = generator.generateTable(dbSchema.tables[0]);
 console.log(tableCode);
 ```
@@ -120,7 +121,7 @@ console.log(tableCode);
 #### 使用自定义选项
 
 ```typescript
-const generator = await GeneratorFactory.createGenerator('gorm', {
+const generator = GeneratorFactory.createGenerator('gorm', {
   language: 'gorm',
   namespace: 'models',
   generateComments: true
@@ -164,21 +165,13 @@ const dbSchema = parseSQL(sql, {
 #### 从文件读取 SQL
 
 ```typescript
-import { ReaderFactory } from '@chihqiang/sql-quicktype';
+import { readSQLFromFile, readSQLFromString } from '@chihqiang/sql-quicktype';
 
 // 从文件读取
-const fileReader = ReaderFactory.createReader({
-  type: 'file',
-  source: './schema.sql'
-});
-const sql = await fileReader.read();
+const sqlFromFile = await readSQLFromFile('./schema.sql');
 
 // 从字符串读取
-const stringReader = ReaderFactory.createReader({
-  type: 'string',
-  source: 'CREATE TABLE users (id INT PRIMARY KEY);'
-});
-const sql = await stringReader.read();
+const sqlFromString = readSQLFromString('CREATE TABLE users (id INT PRIMARY KEY);');
 ```
 
 #### 使用 generateCode 函数
@@ -197,7 +190,7 @@ const sql = `
 `;
 
 // 生成 TypeScript 代码
-const tsCode = await generateCode(sql, {
+const tsCode = generateCode(sql, {
   language: 'typescript',
   namespace: 'models',
   dialect: 'mysql',
@@ -206,7 +199,7 @@ const tsCode = await generateCode(sql, {
 console.log(tsCode);
 
 // 生成 GORM 代码
-const gormCode = await generateCode(sql, {
+const gormCode = generateCode(sql, {
   language: 'gorm',
   namespace: 'models',
   dialect: 'mysql',
@@ -330,7 +323,7 @@ console.log(gormCode);
 
 **返回值：**
 
-- `Promise<string>`: 生成的代码字符串
+- `string`: 生成的代码字符串（同步，无需 await）
 
 ### GeneratorFactory.createGenerator(language, options)
 
@@ -346,21 +339,31 @@ console.log(gormCode);
 
 **返回值：**
 
-- `Promise<AGenerator>`: 生成器实例的 Promise
+- `BaseGenerator`: 生成器基类
 
-### ReaderFactory.createReader(options)
+### readSQLFromFile(path)
 
-创建读取器实例。
+从文件读取 SQL 内容。
 
 **参数：**
 
-- `options` (ReaderOptions): 读取器选项
-  - `type` (string): 读取器类型（string、file）
-  - `source` (string): 数据源
+- `path` (string): SQL 文件路径
 
 **返回值：**
 
-- `Reader`: 读取器实例
+- `Promise<string>`: SQL 文件内容
+
+### readSQLFromString(sql)
+
+从字符串读取 SQL 内容。
+
+**参数：**
+
+- `sql` (string): SQL 字符串
+
+**返回值：**
+
+- `string`: 返回原 SQL 字符串（同步，仅做空值校验）
 
 ## 示例
 

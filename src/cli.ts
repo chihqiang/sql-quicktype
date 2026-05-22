@@ -4,8 +4,8 @@
  */
 import { Command } from 'commander';
 const program = new Command();
-import { commandGenerateSqlString } from './cli/generate-sql';
-import { commandGenerateDb } from './cli/generate-db';
+import { sqlCommand } from './cli/sql-command';
+import { dbCommand } from './cli/db-command';
 import { version } from '../package.json';
 
 program
@@ -14,9 +14,9 @@ program
   .version(version);
 
 // Register generate-string command
-commandGenerateSqlString(program);
+sqlCommand(program);
 // Register generate-db command
-commandGenerateDb(program);
+dbCommand(program);
 
 // Parse command line arguments
 program.parse();
