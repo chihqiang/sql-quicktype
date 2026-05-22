@@ -48,9 +48,7 @@ export function dbCommand(program: Command) {
 
       const [tablesResult] = await connection.execute('SHOW TABLES');
       const rows = tablesResult as RowDataPacket[];
-      const tables = rows.map(
-        (row) => Object.values(row)[0] as string
-      );
+      const tables = rows.map((row) => Object.values(row)[0] as string);
       console.log(`Found ${tables.length} tables: ${tables.join(', ')}`);
 
       const needsNamespace = LANGUAGES_REQUIRING_NAMESPACE.includes(
@@ -67,7 +65,15 @@ export function dbCommand(program: Command) {
             `SHOW CREATE TABLE \`${tableName}\``
           );
           const resultRows = result as RowDataPacket[];
-          const createTableSql = resultRows[0]?.['Create Table'] as string | undefined;
+          const createTableSql = resultRows[0]?.['Create Table'] as
+            | string
+            | undefined;
+
+          if (!createTableSql) {
+            throw new Error(
+              `Failed to get CREATE TABLE statement for '${tableName}'`
+            );
+          }
 
           await generateCodeToFiles(createTableSql, {
             output: options.output,
@@ -89,7 +95,8 @@ export function dbCommand(program: Command) {
           failedTables.push(tables[i]);
           console.error(
             `Failed to process table '${tables[i]}':`,
-            (results[i] as PromiseRejectedResult).reason?.message || 'Unknown error'
+            (results[i] as PromiseRejectedResult).reason?.message ||
+              'Unknown error'
           );
         }
       }

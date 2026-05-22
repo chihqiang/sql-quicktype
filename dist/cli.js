@@ -1163,9 +1163,7 @@ function dbCommand(program2) {
       console.log("Connected to database successfully");
       const [tablesResult] = await connection.execute("SHOW TABLES");
       const rows = tablesResult;
-      const tables = rows.map(
-        (row) => Object.values(row)[0]
-      );
+      const tables = rows.map((row) => Object.values(row)[0]);
       console.log(`Found ${tables.length} tables: ${tables.join(", ")}`);
       const needsNamespace = LANGUAGES_REQUIRING_NAMESPACE.includes(
         options.language
@@ -1182,6 +1180,11 @@ function dbCommand(program2) {
           );
           const resultRows = result;
           const createTableSql = (_a2 = resultRows[0]) == null ? void 0 : _a2["Create Table"];
+          if (!createTableSql) {
+            throw new Error(
+              `Failed to get CREATE TABLE statement for '${tableName}'`
+            );
+          }
           await generateCodeToFiles(createTableSql, {
             output: options.output,
             language: options.language,
@@ -1228,7 +1231,7 @@ Summary: ${successCount} tables succeeded, ${failedTables.length} tables failed`
 }
 
 // package.json
-var version = "0.0.1";
+var version = "0.0.2";
 
 // src/cli.ts
 var program = new import_commander.Command();
