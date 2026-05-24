@@ -2,52 +2,52 @@ import { ColumnSchema, DatabaseSchema, SQLType, TableSchema } from '../schema';
 import type { Language } from '../constants';
 
 /**
- * 生成器配置
+ * Generator options
  */
 export interface Options {
   /**
-   * 目标语言
+   * Target language
    */
   language: Language;
 
   /**
-   * 是否生成注释（默认 true）
+   * Whether to generate comments (default: true)
    */
   generateComments?: boolean;
 
   /**
-   * 命名空间/包名（适用于 Go、GORM、XORM 等需要包名的语言）
+   * Namespace/package name (for Go, GORM, XORM, etc.)
    */
   namespace?: string;
 }
 
 /**
- * 语言生成器基类
- * 定义了生成不同语言类型的通用接口和方法
+ * Base language generator class
+ * Defines common interface and methods for generating code in different languages
  */
 export abstract class BaseGenerator {
   /**
-   * 生成整个数据库模式的类型定义
+   * Generate type definitions for the entire database schema
    */
   abstract generateDatabase(database: DatabaseSchema): string;
 
   /**
-   * 生成单个表的类型定义
+   * Generate type definitions for a single table
    */
   abstract generateTable(table: TableSchema): string;
 
   /**
-   * 生成列的类型定义
+   * Generate column type definition
    */
   abstract generateColumn(column: ColumnSchema): string;
 
   /**
-   * 映射 SQL 类型到目标语言类型
+   * Map SQL type to target language type
    */
   abstract mapSQLType(type: SQLType): string;
 
   /**
-   * 格式化类型名称（如驼峰命名、帕斯卡命名等）
+   * Format type name (e.g., PascalCase)
    */
   protected formatTypeName(name: string): string {
     return name
@@ -57,7 +57,7 @@ export abstract class BaseGenerator {
   }
 
   /**
-   * 格式化字段名称
+   * Format field name
    */
   protected formatPascalCase(name: string): string {
     return name
@@ -71,7 +71,7 @@ export abstract class BaseGenerator {
   }
 
   /**
-   * 生成默认值
+   * Generate default value
    */
   protected generateDefaultValue(column: ColumnSchema): string {
     if (!column.default) {
@@ -98,8 +98,8 @@ export abstract class BaseGenerator {
 }
 
 /**
- * 语言生成器工厂类
- * 用于创建不同语言的生成器实例
+ * Language generator factory
+ * Used to create generator instances for different languages
  */
 export class GeneratorFactory {
   private static registry: Record<

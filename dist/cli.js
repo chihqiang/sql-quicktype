@@ -61,8 +61,8 @@ SQL length: ${sql.length} characters`
 var SQLParser = class {
   constructor(options = { dialect: "mysql" }) {
     /**
-     * 默认类型解析器
-     * 提供基本的 SQL 类型到 SQLType 的映射逻辑
+     * Default type resolver
+     * Provides basic SQL type to SQLType mapping logic
      */
     this.defaultTypeResolver = {
       resolve: (def) => {
@@ -162,8 +162,8 @@ var SQLParser = class {
             };
             return emptyEnumType;
           /**
-           * 未识别类型默认降级为 text，避免解析失败
-           * 在严格模式下，遇到未识别的类型会抛出错误
+           * Unrecognized types fall back to text by default to avoid parse failure
+           * In strict mode, unrecognized types throw an error
            */
           default:
             if (this.options.strictMode) {
@@ -185,7 +185,7 @@ var SQLParser = class {
     this.parser = new import_node_sql_parser.Parser();
   }
   /**
-   * 遍历 AST，提取所有 CREATE TABLE
+   * Traverse AST, extract all CREATE TABLE statements
    */
   parseDatabase(ast, dbName = this.options.dbName || "db") {
     const db = {
@@ -204,7 +204,7 @@ var SQLParser = class {
     return db;
   }
   /**
-   * 类型守卫：判断是否为 CREATE TABLE 语句
+   * Type guard: check if node is a CREATE TABLE statement
    */
   isCreateTable(node) {
     if (!node || typeof node !== "object") return false;
@@ -212,7 +212,7 @@ var SQLParser = class {
     return n.type === "create" && n.keyword === "table";
   }
   /**
-   * 解析单表 AST -> TableSchema
+   * Parse single table AST -> TableSchema
    */
   parseTable(node) {
     var _a, _b, _c, _d;
@@ -256,9 +256,9 @@ var SQLParser = class {
     return table;
   }
   /**
-   * 解析列定义 AST -> ColumnSchema
+   * Parse column definition AST -> ColumnSchema
    *
-   * 注意：字段级 primary/unique 与表级定义会叠加
+   * Note: Field-level primary/unique and table-level definitions will overlap
    */
   parseColumn(def) {
     var _a, _b, _c;
@@ -272,18 +272,18 @@ var SQLParser = class {
     return {
       name: columnName,
       /**
-       * 抽象 SQL 类型映射
+       * Abstract SQL type mapping
        */
       type: this.mapSQLType(def.definition),
       /**
-       * node-sql-parser 中：
-       * nullable 是一个对象，当它存在且 type 是 "not null" 时，表示 NOT NULL
+       * In node-sql-parser:
+       * nullable is an object; when it exists and type is "not null", it means NOT NULL
        */
       nullable: !(def.nullable && def.nullable.type === "not null"),
       primaryKey: !!def.primary_key,
       unique: !!def.unique,
       /**
-       * 默认值需要序列化为 SQL 字符串
+       * Default value needs to be serialized as SQL string
        */
       default: def.default_val ? this.parseDefault(def.default_val) : void 0,
       comment: (_c = (_b = def.comment) == null ? void 0 : _b.value) == null ? void 0 : _c.value,
@@ -292,7 +292,7 @@ var SQLParser = class {
     };
   }
   /**
-   * 解析表级 PRIMARY KEY / UNIQUE / FOREIGN KEY
+   * Parse table-level PRIMARY KEY / UNIQUE / FOREIGN KEY
    */
   parseTableConstraint(def, table) {
     var _a, _b, _c, _d, _e, _f, _g, _h;
@@ -344,7 +344,7 @@ var SQLParser = class {
     }
   }
   /**
-   * 解析普通索引
+   * Parse regular index
    */
   parseIndex(def, table) {
     var _a;
@@ -358,7 +358,7 @@ var SQLParser = class {
     }
   }
   /**
-   * SQL AST 类型 -> SQLType（跨方言抽象）
+   * SQL AST type -> SQLType (cross-dialect abstraction)
    */
   mapSQLType(def) {
     const allResolvers = [
@@ -375,9 +375,9 @@ var SQLParser = class {
     return textType;
   }
   /**
-   * 默认值 AST -> SQL 字符串
+   * Default value AST -> SQL string
    *
-   * 使用 sqlify 确保函数/表达式被正确序列化
+   * Uses sqlify to ensure functions/expressions are serialized correctly
    */
   parseDefault(def) {
     var _a, _b;
@@ -407,13 +407,13 @@ var BaseGenerator = class {
     this.needsTimeCache = null;
   }
   /**
-   * 格式化类型名称（如驼峰命名、帕斯卡命名等）
+   * Format type name (e.g., PascalCase)
    */
   formatTypeName(name) {
     return name.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join("");
   }
   /**
-   * 格式化字段名称
+   * Format field name
    */
   formatPascalCase(name) {
     return name.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join("");
@@ -422,7 +422,7 @@ var BaseGenerator = class {
     return this.formatPascalCase(name);
   }
   /**
-   * 生成默认值
+   * Generate default value
    */
   generateDefaultValue(column) {
     if (!column.default) {
@@ -465,7 +465,7 @@ var TypeScriptGenerator = class extends BaseGenerator {
     this.options = options;
   }
   /**
-   * 格式化字段名称（使用驼峰命名）
+   * Format field name (camelCase)
    */
   formatFieldName(name) {
     return name.split("_").map((part, index) => {
@@ -476,7 +476,7 @@ var TypeScriptGenerator = class extends BaseGenerator {
     }).join("");
   }
   /**
-   * 生成整个数据库模式的类型定义
+   * Generate type definitions for the entire database schema
    */
   generateDatabase(database) {
     let result = `// Database: ${database.name}
@@ -491,10 +491,10 @@ var TypeScriptGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 生成单个表的类型定义
+   * Generate type definition for a single table
    */
   generateTable(table) {
-    let result = `// ${table.name} \u8868\u7ED3\u6784
+    let result = `// ${table.name} table structure
 `;
     result += `export interface ${this.formatTypeName(table.name)} {
 `;
@@ -505,7 +505,7 @@ var TypeScriptGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 生成列的类型定义
+   * Generate column type definition
    */
   generateColumn(column) {
     const fieldName = this.formatFieldName(column.name);
@@ -519,7 +519,7 @@ var TypeScriptGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 映射 SQL 类型到 TypeScript 类型
+   * Map SQL type to TypeScript type
    */
   mapSQLType(type, columnName) {
     switch (type.kind) {
@@ -562,7 +562,7 @@ var GoGenerator = class extends BaseGenerator {
     this.options = options;
   }
   /**
-   * 生成整个数据库模式的类型定义
+   * Generate type definitions for the entire database schema
    */
   generateDatabase(database) {
     let result = `// Database: ${database.name}
@@ -587,10 +587,10 @@ var GoGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 生成单个表的类型定义
+   * Generate type definition for a single table
    */
   generateTable(table) {
-    let result = `// ${table.name} \u8868\u7ED3\u6784
+    let result = `// ${table.name} table structure
 `;
     result += `type ${this.formatTypeName(table.name)} struct {
 `;
@@ -601,7 +601,7 @@ var GoGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 生成列的类型定义
+   * Generate column type definition
    */
   generateColumn(column) {
     const fieldName = this.formatFieldName(column.name);
@@ -615,7 +615,7 @@ var GoGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 映射 SQL 类型到 Go 类型
+   * Map SQL type to Go type
    */
   mapSQLType(type) {
     switch (type.kind) {
@@ -644,7 +644,7 @@ var GoGenerator = class extends BaseGenerator {
     }
   }
   /**
-   * 生成 Go 结构体标签
+   * Generate Go struct tags
    */
   generateGoTag(column) {
     const tags = [];
@@ -661,7 +661,7 @@ var GormGenerator = class extends BaseGenerator {
     this.options = options;
   }
   /**
-   * 生成整个数据库模式的类型定义
+   * Generate type definitions for the entire database schema
    */
   generateDatabase(database) {
     let result = `// Database: ${database.name}
@@ -686,10 +686,10 @@ var GormGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 生成单个表的类型定义
+   * Generate type definition for a single table
    */
   generateTable(table) {
-    let result = `// ${table.name} \u8868\u7ED3\u6784
+    let result = `// ${table.name} table structure
 `;
     result += `type ${this.formatTypeName(table.name)} struct {
 `;
@@ -700,7 +700,7 @@ var GormGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 生成列的类型定义
+   * Generate column type definition
    */
   generateColumn(column) {
     const fieldName = this.formatFieldName(column.name);
@@ -714,7 +714,7 @@ var GormGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 映射 SQL 类型到 GORM 类型
+   * Map SQL type to GORM type
    */
   mapSQLType(type) {
     switch (type.kind) {
@@ -743,7 +743,7 @@ var GormGenerator = class extends BaseGenerator {
     }
   }
   /**
-   * 生成 GORM 结构体标签
+   * Generate GORM struct tags
    */
   generateGormTag(column) {
     const tags = [];
@@ -839,7 +839,7 @@ var XormGenerator = class extends BaseGenerator {
     this.options = options;
   }
   /**
-   * 生成整个数据库模式的类型定义
+   * Generate type definitions for the entire database schema
    */
   generateDatabase(database) {
     let result = `// Database: ${database.name}
@@ -864,10 +864,10 @@ var XormGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 生成单个表的类型定义
+   * Generate type definition for a single table
    */
   generateTable(table) {
-    let result = `// ${table.name} \u8868\u7ED3\u6784
+    let result = `// ${table.name} table structure
 `;
     result += `type ${this.formatTypeName(table.name)} struct {
 `;
@@ -878,7 +878,7 @@ var XormGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 生成列的类型定义
+   * Generate column type definition
    */
   generateColumn(column) {
     const fieldName = this.formatFieldName(column.name);
@@ -892,7 +892,7 @@ var XormGenerator = class extends BaseGenerator {
     return result;
   }
   /**
-   * 映射 SQL 类型到 XORM 类型
+   * Map SQL type to XORM type
    */
   mapSQLType(type) {
     switch (type.kind) {
@@ -921,7 +921,7 @@ var XormGenerator = class extends BaseGenerator {
     }
   }
   /**
-   * 生成 XORM 结构体标签
+   * Generate XORM struct tags
    */
   generateXormTag(column) {
     const tags = [];
@@ -1163,9 +1163,7 @@ function dbCommand(program2) {
       console.log("Connected to database successfully");
       const [tablesResult] = await connection.execute("SHOW TABLES");
       const rows = tablesResult;
-      const tables = rows.map(
-        (row) => Object.values(row)[0]
-      );
+      const tables = rows.map((row) => Object.values(row)[0]);
       console.log(`Found ${tables.length} tables: ${tables.join(", ")}`);
       const needsNamespace = LANGUAGES_REQUIRING_NAMESPACE.includes(
         options.language
@@ -1182,6 +1180,9 @@ function dbCommand(program2) {
           );
           const resultRows = result;
           const createTableSql = (_a2 = resultRows[0]) == null ? void 0 : _a2["Create Table"];
+          if (!createTableSql) {
+            throw new Error(`Failed to get CREATE TABLE for '${tableName}'`);
+          }
           await generateCodeToFiles(createTableSql, {
             output: options.output,
             language: options.language,
@@ -1228,7 +1229,7 @@ Summary: ${successCount} tables succeeded, ${failedTables.length} tables failed`
 }
 
 // package.json
-var version = "0.0.1";
+var version = "0.0.2";
 
 // src/cli.ts
 var program = new import_commander.Command();

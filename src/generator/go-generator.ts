@@ -2,8 +2,8 @@ import { DatabaseSchema, TableSchema, ColumnSchema, SQLType } from '../schema';
 import { BaseGenerator, Options } from './base';
 
 /**
- * Go 语言生成器
- * 生成符合 Go 语言规范的类型定义
+ * Go language generator
+ * Generates type definitions conforming to Go conventions
  */
 export class GoGenerator extends BaseGenerator {
   private options: Options;
@@ -14,7 +14,7 @@ export class GoGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成整个数据库模式的类型定义
+   * Generate type definitions for the entire database schema
    */
   generateDatabase(database: DatabaseSchema): string {
     let result = `// Database: ${database.name}\n`;
@@ -39,10 +39,10 @@ export class GoGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成单个表的类型定义
+   * Generate type definition for a single table
    */
   generateTable(table: TableSchema): string {
-    let result = `// ${table.name} 表结构\n`;
+    let result = `// ${table.name} table structure\n`;
     result += `type ${this.formatTypeName(table.name)} struct {\n`;
 
     for (const column of table.columns) {
@@ -54,7 +54,7 @@ export class GoGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成列的类型定义
+   * Generate column type definition
    */
   generateColumn(column: ColumnSchema): string {
     const fieldName = this.formatFieldName(column.name);
@@ -71,7 +71,7 @@ export class GoGenerator extends BaseGenerator {
   }
 
   /**
-   * 映射 SQL 类型到 Go 类型
+   * Map SQL type to Go type
    */
   mapSQLType(type: SQLType): string {
     switch (type.kind) {
@@ -101,7 +101,7 @@ export class GoGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成 Go 结构体标签
+   * Generate Go struct tags
    */
   private generateGoTag(column: ColumnSchema): string {
     const tags = [];

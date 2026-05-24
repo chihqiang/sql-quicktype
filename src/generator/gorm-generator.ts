@@ -2,8 +2,8 @@ import { DatabaseSchema, TableSchema, ColumnSchema, SQLType } from '../schema';
 import { BaseGenerator, Options } from './base';
 
 /**
- * GORM 语言生成器
- * 生成符合 GORM 规范的类型定义
+ * GORM language generator
+ * Generates type definitions conforming to GORM conventions
  */
 export class GormGenerator extends BaseGenerator {
   private options: Options;
@@ -14,7 +14,7 @@ export class GormGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成整个数据库模式的类型定义
+   * Generate type definitions for the entire database schema
    */
   generateDatabase(database: DatabaseSchema): string {
     let result = `// Database: ${database.name}\n`;
@@ -39,10 +39,10 @@ export class GormGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成单个表的类型定义
+   * Generate type definition for a single table
    */
   generateTable(table: TableSchema): string {
-    let result = `// ${table.name} 表结构\n`;
+    let result = `// ${table.name} table structure\n`;
     result += `type ${this.formatTypeName(table.name)} struct {\n`;
 
     for (const column of table.columns) {
@@ -54,7 +54,7 @@ export class GormGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成列的类型定义
+   * Generate column type definition
    */
   generateColumn(column: ColumnSchema): string {
     const fieldName = this.formatFieldName(column.name);
@@ -71,7 +71,7 @@ export class GormGenerator extends BaseGenerator {
   }
 
   /**
-   * 映射 SQL 类型到 GORM 类型
+   * Map SQL type to GORM type
    */
   mapSQLType(type: SQLType): string {
     switch (type.kind) {
@@ -101,15 +101,15 @@ export class GormGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成 GORM 结构体标签
+   * Generate GORM struct tags
    */
   private generateGormTag(column: ColumnSchema): string {
     const tags = [];
 
-    // 添加 column 标签
+    // add column tag
     tags.push(`column:${column.name}`);
 
-    // 添加 type 标签
+    // add type tag
     let typeTag = 'type:';
     switch (column.type.kind) {
       case 'int':
@@ -173,32 +173,32 @@ export class GormGenerator extends BaseGenerator {
     }
     tags.push(typeTag);
 
-    // 添加 primaryKey 标签
+    // add primaryKey tag
     if (column.primaryKey) {
       tags.push('primaryKey');
     }
 
-    // 添加 unique 标签
+    // add unique tag
     if (column.unique) {
       tags.push('unique');
     }
 
-    // 添加 not null 标签
+    // add not null tag
     if (!column.nullable) {
       tags.push('not null');
     }
 
-    // 添加 default 标签
+    // add default tag
     if (column.default) {
       tags.push(`default:${column.default}`);
     }
 
-    // 添加 autoIncrement 标签
+    // add autoIncrement tag
     if (column.generated) {
       tags.push('autoIncrement');
     }
 
-    // 添加 comment 标签
+    // add comment tag
     if (column.comment) {
       tags.push(`comment:${column.comment}`);
     }

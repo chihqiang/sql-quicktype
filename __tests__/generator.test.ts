@@ -4,13 +4,13 @@ import { parseSQL } from '../src/sql-parser';
 describe('Generator', () => {
   const sql = `
     CREATE TABLE users (
-      id INT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
-      name VARCHAR(255) NOT NULL COMMENT '用户名',
-      email VARCHAR(255) UNIQUE NOT NULL COMMENT '用户邮箱',
-      age INT COMMENT '用户年龄',
-      is_active BOOLEAN DEFAULT TRUE COMMENT '是否激活',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
-    ) COMMENT '用户表';
+      id INT PRIMARY KEY AUTO_INCREMENT COMMENT 'user ID',
+      name VARCHAR(255) NOT NULL COMMENT 'user name',
+      email VARCHAR(255) UNIQUE NOT NULL COMMENT 'user email',
+      age INT COMMENT 'user age',
+      is_active BOOLEAN DEFAULT TRUE COMMENT 'is active',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'created at'
+    ) COMMENT 'users table';
   `;
 
   const dbSchema = parseSQL(sql, { dialect: 'mysql', dbName: 'test_db' });
@@ -22,8 +22,8 @@ describe('Generator', () => {
 
       expect(code).toContain('type Users struct');
       expect(code).toContain('gorm:"');
-      expect(code).toContain('comment:用户ID');
-      expect(code).toContain('comment:用户名');
+      expect(code).toContain('comment:user ID');
+      expect(code).toContain('comment:user name');
     });
 
     it('should generate GORM code with namespace', () => {
@@ -86,8 +86,8 @@ describe('Generator', () => {
       });
       const code = generator.generateDatabase(dbSchema);
       // Header comments still present, but column-level inline comments removed
-      expect(code).not.toContain('// 用户ID');
-      expect(code).not.toContain('// 用户名');
+      expect(code).not.toContain('// user ID');
+      expect(code).not.toContain('// user name');
     });
   });
 
@@ -159,7 +159,7 @@ describe('Generator', () => {
 
       expect(code).toContain('type Users struct');
       expect(code).toContain('xorm:"');
-      expect(code).toContain('comment(用户ID)');
+      expect(code).toContain('comment(user ID)');
     });
 
     it('should generate XORM code with namespace', () => {
