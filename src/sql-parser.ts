@@ -19,66 +19,66 @@ import {
 } from './schema';
 
 /**
- * 类型解析器接口
- * 用于自定义 SQL 类型到 SQLType 的映射逻辑
+ * Type resolver interface
+ * For custom SQL type to SQLType mapping logic
  */
 export interface TypeResolver {
   /**
-   * 解析 SQL 类型定义为 SQLType
-   * @param def 列定义
-   * @returns SQLType 对象
+   * Resolve SQL type definition to SQLType
+   * @param def Column definition
+   * @returns SQLType object
    */
   resolve(def: ColumnDefinition['definition']): SQLType | null;
 }
 
 /**
- * SQL 解析器配置
+ * SQL parser configuration
  */
 export interface SQLParserOptions {
   /**
-   * 数据库方言（影响 AST 解析规则）
+   * Database dialect (affects AST parsing rules)
    */
   dialect: string;
 
   /**
-   * 数据库名称（用于构建 DatabaseSchema）
+   * Database name (used to build DatabaseSchema)
    */
   dbName?: string;
 
   /**
-   * 是否启用严格模式
-   * 在严格模式下，遇到未识别的类型会抛出错误而不是默认降级为 text
-   * 默认值：false
+   * Enable strict mode
+   * In strict mode, unrecognized types throw an error instead of falling back to text
+   * Default: false
    */
   strictMode?: boolean;
 
   /**
-   * 是否忽略注释
-   * 默认值：false
+   * Whether to ignore comments
+   * Default: false
    */
   ignoreComments?: boolean;
 
   /**
-   * 是否解析外键约束
-   * 默认值：true
+   * Whether to parse foreign key constraints
+   * Default: true
    */
   parseForeignKeys?: boolean;
 
   /**
-   * 是否解析索引
-   * 默认值：true
+   * Whether to parse indexes
+   * Default: true
    */
   parseIndexes?: boolean;
 
   /**
-   * 自定义类型解析器
-   * 用于扩展或覆盖默认的类型解析逻辑
+   * Custom type resolvers
+   * Used to extend or override the default type resolution logic
    */
   typeResolvers?: TypeResolver[];
 }
 
 /**
- * CREATE TABLE 语句的 AST 节点类型
+ * AST node type for CREATE TABLE statements
  */
 export interface CreateTableAST {
   type: 'create';
@@ -97,7 +97,7 @@ export interface CreateTableAST {
 }
 
 /**
- * 列定义的 AST 节点类型
+ * AST node type for column definitions
  */
 export interface ColumnDefinition {
   resource: 'column';
@@ -134,7 +134,7 @@ export interface ColumnDefinition {
 }
 
 /**
- * 约束定义的 AST 节点类型
+ * AST node type for constraint definitions
  */
 export interface ConstraintDefinition {
   resource: 'constraint';
@@ -159,7 +159,7 @@ export interface ConstraintDefinition {
 }
 
 /**
- * 索引定义的 AST 节点类型
+ * AST node type for index definitions
  */
 export interface IndexDefinition {
   resource: 'index';
@@ -172,8 +172,8 @@ export interface IndexDefinition {
 }
 
 /**
- * 对外暴露的便捷方法：
- * SQL 字符串 -> DatabaseSchema
+ * Public convenience method:
+ * SQL string -> DatabaseSchema
  */
 export function parseSQL(
   sql: string,
@@ -187,15 +187,15 @@ export function parseSQL(
     const parser = new Parser();
 
     /**
-     * 预处理 SQL 字符串
-     * 1. 移除多余的空白字符
-     * 2. 确保每个语句都以分号结尾
+     * Preprocess SQL string
+     * 1. Remove extra whitespace
+     * 2. Ensure each statement ends with a semicolon
      */
     const processedSql = sql.trim().replace(/\s+/g, ' ').replace(/;[\s;]*;/g, ';');
 
     /**
-     * node-sql-parser 会根据 database 参数
-     * 产生不同结构的 AST（非常关键）
+     * node-sql-parser produces different AST structures
+     * based on the database parameter (critical)
      */
     const ast = parser.astify(processedSql, { database: options.dialect });
 
@@ -225,10 +225,10 @@ export function parseSQL(
 }
 
 /**
- * 核心 SQL AST -> Schema IR 转换器
+ * Core SQL AST -> Schema IR converter
  *
- * 职责：把 node-sql-parser 的 AST
- * 转成你定义的 DatabaseSchema（中间表示层 IR）
+ * Responsibility: Transform node-sql-parser AST
+ * into your defined DatabaseSchema (intermediate representation IR)
  */
 export class SQLParser {
   options: SQLParserOptions & {
@@ -253,7 +253,7 @@ export class SQLParser {
   }
 
   /**
-   * 遍历 AST，提取所有 CREATE TABLE
+   * Traverse AST, extract all CREATE TABLE statements
    */
   public parseDatabase(
     ast: AST[],
@@ -279,7 +279,7 @@ export class SQLParser {
   }
 
   /**
-   * 类型守卫：判断是否为 CREATE TABLE 语句
+   * Type guard: check if node is a CREATE TABLE statement
    */
   private isCreateTable(node: unknown): node is CreateTableAST {
     if (!node || typeof node !== 'object') return false;
@@ -288,7 +288,7 @@ export class SQLParser {
   }
 
   /**
-   * 解析单表 AST -> TableSchema
+   * Parse single table AST -> TableSchema
    */
   private parseTable(node: CreateTableAST): TableSchema {
     const tableName = node.table?.[0]?.table;
@@ -298,7 +298,7 @@ export class SQLParser {
     }
 
     /**
-     * MySQL 表注释在 table_options 中
+     * MySQL table comment is in table_options
      */
     const comment = node.table_options?.find(
       (o: { keyword: string; value: string }) => o.keyword === 'comment'
@@ -313,7 +313,7 @@ export class SQLParser {
     };
 
     /**
-     * create_definitions 中混杂：
+     * create_definitions contains mixed items:
      * - column
      * - constraint
      * - index
@@ -349,9 +349,9 @@ export class SQLParser {
   }
 
   /**
-   * 解析列定义 AST -> ColumnSchema
+   * Parse column definition AST -> ColumnSchema
    *
-   * 注意：字段级 primary/unique 与表级定义会叠加
+   * Note: Field-level primary/unique and table-level definitions will overlap
    */
   private parseColumn(def: ColumnDefinition): ColumnSchema {
     const columnName = def.column?.column;
@@ -368,13 +368,13 @@ export class SQLParser {
       name: columnName,
 
       /**
-       * 抽象 SQL 类型映射
+       * Abstract SQL type mapping
        */
       type: this.mapSQLType(def.definition),
 
       /**
-       * node-sql-parser 中：
-       * nullable 是一个对象，当它存在且 type 是 "not null" 时，表示 NOT NULL
+       * In node-sql-parser:
+       * nullable is an object; when it exists and type is "not null", it means NOT NULL
        */
       nullable: !(def.nullable && def.nullable.type === 'not null'),
 
@@ -382,7 +382,7 @@ export class SQLParser {
       unique: !!def.unique,
 
       /**
-       * 默认值需要序列化为 SQL 字符串
+       * Default value needs to be serialized as SQL string
        */
       default: def.default_val ? this.parseDefault(def.default_val) : undefined,
 
@@ -394,7 +394,7 @@ export class SQLParser {
   }
 
   /**
-   * 解析表级 PRIMARY KEY / UNIQUE / FOREIGN KEY
+   * Parse table-level PRIMARY KEY / UNIQUE / FOREIGN KEY
    */
   private parseTableConstraint(def: ConstraintDefinition, table: TableSchema) {
     const type = def.constraint_type?.toUpperCase();
@@ -402,7 +402,7 @@ export class SQLParser {
       def.definition?.map((c: { column: string }) => c.column) || [];
 
     /**
-     * 表级主键
+     * Table-level primary key
      */
     if (type === 'PRIMARY KEY') {
       table.primaryKeys!.push(...columns);
@@ -415,7 +415,7 @@ export class SQLParser {
     }
 
     /**
-     * 表级唯一索引
+     * Table-level unique index
      */
     if (
       (type === 'UNIQUE' || type === 'UNIQUE KEY') &&
@@ -436,22 +436,22 @@ export class SQLParser {
     }
 
     /**
-     * 表级外键约束
+     * Table-level foreign key constraint
      */
     if (type === 'FOREIGN KEY' && this.options.parseForeignKeys) {
-      // 检查是否有引用表信息（兼容不同版本的AST结构）
+      // Check if referenced table info exists (compatible with different AST structures)
       let referencedTable: string | undefined;
       let referencedColumns: string[] = [];
 
-      // 尝试多种可能的AST结构
+      // Try multiple possible AST structures
       if ('reference' in def && def.reference) {
-        // 标准结构
+        // Standard structure
         referencedTable = def.reference.table?.[0]?.table;
         referencedColumns =
           def.reference.definition?.map((c: { column: string }) => c.column) ||
           [];
       } else if ('table' in def && def.table) {
-        // 备选结构1
+        // Alternative structure 1
         referencedTable = def.table?.[0]?.table;
         referencedColumns =
           def.definition?.map((c: { column: string }) => c.column) || [];
@@ -475,7 +475,7 @@ export class SQLParser {
   }
 
   /**
-   * 解析普通索引
+   * Parse regular index
    */
   private parseIndex(def: IndexDefinition, table: TableSchema) {
     if (this.options.parseIndexes) {
@@ -489,8 +489,8 @@ export class SQLParser {
   }
 
   /**
-   * 默认类型解析器
-   * 提供基本的 SQL 类型到 SQLType 的映射逻辑
+   * Default type resolver
+   * Provides basic SQL type to SQLType mapping logic
    */
   private defaultTypeResolver: TypeResolver = {
     resolve: (def: ColumnDefinition['definition']): SQLType | null => {
@@ -562,7 +562,7 @@ export class SQLParser {
           return booleanType;
 
         case 'tinyint':
-          // 只有当长度为 1 时才视为 boolean
+          // Only treat as boolean when length is 1
           if (
             def.length &&
             (Array.isArray(def.length) ? def.length[0] === 1 : def.length === 1)
@@ -587,8 +587,8 @@ export class SQLParser {
           return jsonType;
 
         case 'enum':
-          // 修复枚举类型解析
-          // 从 expr.value 中获取枚举值
+          // Fix enum type resolution
+          // Get enum values from expr.value
           if (def.expr && def.expr.value) {
             const values = def.expr.value.map(
               (v: { value?: string; raw?: unknown }) => {
@@ -600,7 +600,7 @@ export class SQLParser {
                 } else {
                   value = String(v);
                 }
-                // 去除可能的引号
+                // Remove possible quotes
                 return value.replace(/^['"]|['"]$/g, '');
               }
             );
@@ -617,8 +617,8 @@ export class SQLParser {
           return emptyEnumType;
 
         /**
-         * 未识别类型默认降级为 text，避免解析失败
-         * 在严格模式下，遇到未识别的类型会抛出错误
+         * Unrecognized types fall back to text by default to avoid parse failure
+         * In strict mode, unrecognized types throw an error
          */
         default:
           if (this.options.strictMode) {
@@ -631,16 +631,16 @@ export class SQLParser {
   };
 
   /**
-   * SQL AST 类型 -> SQLType（跨方言抽象）
+   * SQL AST type -> SQLType (cross-dialect abstraction)
    */
   private mapSQLType(def: ColumnDefinition['definition']): SQLType {
-    // 合并用户自定义的类型解析器和默认类型解析器
+    // Merge user-defined type resolvers and default type resolver
     const allResolvers = [
       ...this.options.typeResolvers,
       this.defaultTypeResolver,
     ];
 
-    // 尝试使用所有类型解析器
+    // Try all type resolvers
     for (const resolver of allResolvers) {
       const result = resolver.resolve(def);
       if (result) {
@@ -648,15 +648,15 @@ export class SQLParser {
       }
     }
 
-    // 如果所有解析器都返回 null，默认返回 text 类型
+    // If all resolvers return null, default to text type
     const textType: TextType = { kind: 'text' };
     return textType;
   }
 
   /**
-   * 默认值 AST -> SQL 字符串
+   * Default value AST -> SQL string
    *
-   * 使用 sqlify 确保函数/表达式被正确序列化
+   * Uses sqlify to ensure functions/expressions are serialized correctly
    */
   private parseDefault(def: { value: unknown }): string | null {
     const val = def.value as Record<string, unknown> | null;

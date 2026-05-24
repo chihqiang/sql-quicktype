@@ -2,8 +2,8 @@ import { ColumnSchema, DatabaseSchema, SQLType, TableSchema } from '../schema';
 import { BaseGenerator, Options } from './base';
 
 /**
- * TypeScript 语言生成器
- * 生成符合 TypeScript 规范的类型定义
+ * TypeScript language generator
+ * Generates type definitions conforming to TypeScript conventions
  */
 export class TypeScriptGenerator extends BaseGenerator {
   private options: Options;
@@ -13,7 +13,7 @@ export class TypeScriptGenerator extends BaseGenerator {
   }
 
   /**
-   * 格式化字段名称（使用驼峰命名）
+   * Format field name (camelCase)
    */
   protected formatFieldName(name: string): string {
     return name
@@ -28,7 +28,7 @@ export class TypeScriptGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成整个数据库模式的类型定义
+   * Generate type definitions for the entire database schema
    */
   generateDatabase(database: DatabaseSchema): string {
     let result = `// Database: ${database.name}\n`;
@@ -43,10 +43,10 @@ export class TypeScriptGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成单个表的类型定义
+   * Generate type definition for a single table
    */
   generateTable(table: TableSchema): string {
-    let result = `// ${table.name} 表结构\n`;
+    let result = `// ${table.name} table structure\n`;
     result += `export interface ${this.formatTypeName(table.name)} {\n`;
 
     for (const column of table.columns) {
@@ -58,7 +58,7 @@ export class TypeScriptGenerator extends BaseGenerator {
   }
 
   /**
-   * 生成列的类型定义
+   * Generate column type definition
    */
   generateColumn(column: ColumnSchema): string {
     const fieldName = this.formatFieldName(column.name);
@@ -75,7 +75,7 @@ export class TypeScriptGenerator extends BaseGenerator {
   }
 
   /**
-   * 映射 SQL 类型到 TypeScript 类型
+   * Map SQL type to TypeScript type
    */
   mapSQLType(type: SQLType, columnName?: string): string {
     switch (type.kind) {

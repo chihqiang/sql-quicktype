@@ -1,33 +1,33 @@
 /**
- * 整个数据库的抽象表示（Database AST / IR）
- * 可用于：
- * - 解析 DDL -> 结构化表示
- * - 根据结构生成 DDL
- * - Schema Diff / 迁移工具
- * - 可视化数据库结构
+ * Abstract representation of a database (Database AST / IR)
+ * Use cases:
+ * - Parse DDL into structured representation
+ * - Generate DDL from structure
+ * - Schema diff / migration tools
+ * - Visualize database structure
  */
 export interface DatabaseSchema {
-  /** 数据库名 */
+  /** Database name */
   name: string;
 
-  /** 数据库方言（决定类型映射、DDL 生成策略），可选值：mysql | postgres | sqlite | sqlserver */
+  /** Database dialect (determines type mapping, DDL generation strategy), values: mysql | postgres | sqlite | sqlserver */
   dialect: string;
 
-  /** 默认字符集（MySQL 常用） */
+  /** Default charset (commonly used by MySQL) */
   charset?: string;
 
-  /** 默认排序规则（MySQL 常用） */
+  /** Default collation (commonly used by MySQL) */
   collation?: string;
 
-  /** 数据库注释 */
+  /** Database comment */
   comment?: string;
 
-  /** 表集合（核心） */
+  /** Table collection (core) */
   tables: TableSchema[];
 
   /**
-   * 元信息（不参与 DDL 生成，但对工具有用）
-   * 比如来源、版本、解析时间、引擎等
+   * Metadata (not involved in DDL generation, but useful for tools)
+   * e.g., source, version, parse time, engine, etc.
    */
   metadata?: {
     createdAt?: string;
@@ -38,115 +38,115 @@ export interface DatabaseSchema {
   };
 
   /**
-   * 运行时构建的快速索引（非持久字段）
+   * Runtime fast index (non-persistent field)
    * name -> TableSchema
    */
   tablesMap?: Record<string, TableSchema>;
 }
 
 /**
- * 表结构的抽象表示
+ * Abstract representation of a table structure
  */
 export interface TableSchema {
-  /** 表名 */
+  /** Table name */
   name: string;
 
-  /** 表注释 */
+  /** Table comment */
   comment?: string;
 
-  /** 所属 schema（Postgres / SQLServer 常用） */
+  /** Schema name (commonly used by PostgreSQL / SQL Server) */
   schema?: string;
 
-  /** 主键列名集合 */
+  /** Primary key column names */
   primaryKeys?: string[];
 
-  /** 是否存在自增主键（影响 DDL 生成策略） */
+  /** Whether auto-increment primary key exists (affects DDL generation strategy) */
   autoIncrement?: boolean;
 
-  /** 列定义（核心） */
+  /** Column definitions (core) */
   columns: ColumnSchema[];
 
-  /** 外键定义 */
+  /** Foreign key definitions */
   foreignKeys?: TableForeignKey[];
 
-  /** 索引定义 */
+  /** Index definitions */
   indexes?: TableIndex[];
 }
 
 /**
- * 表外键定义
+ * Table foreign key definition
  */
 export interface TableForeignKey {
-  /** 外键名 */
+  /** Foreign key name */
   name?: string;
 
-  /** 外键列 */
+  /** Foreign key columns */
   columns: string[];
 
-  /** 引用表名 */
+  /** Referenced table name */
   referencedTable: string;
 
-  /** 引用列名 */
+  /** Referenced column names */
   referencedColumns: string[];
 
-  /** 级联删除策略 */
+  /** Cascade delete strategy */
   onDelete?: string;
 
-  /** 级联合并策略 */
+  /** Cascade update strategy */
   onUpdate?: string;
 }
 
 /**
- * 列的抽象表示
+ * Abstract representation of a column
  */
 export interface ColumnSchema {
-  /** 列名 */
+  /** Column name */
   name: string;
 
-  /** 抽象 SQL 类型（跨方言类型系统） */
+  /** Abstract SQL type (cross-dialect type system) */
   type: SQLType;
 
-  /** 是否允许为 NULL */
+  /** Whether NULL is allowed */
   nullable: boolean;
 
-  /** 是否为主键列（冗余字段，便于快速判断） */
+  /** Whether this is a primary key column (redundant field for quick check) */
   primaryKey: boolean;
 
-  /** 是否唯一 */
+  /** Whether unique */
   unique: boolean;
 
-  /** 默认值表达式（字符串形式保留 SQL 原样） */
+  /** Default value expression (preserved as SQL string) */
   default?: string | null;
 
-  /** 列注释 */
+  /** Column comment */
   comment?: string;
 
-  /** 是否 unsigned（MySQL 特有） */
+  /** Whether unsigned (MySQL specific) */
   unsigned?: boolean;
 
-  /** 是否为计算列 / 生成列（generated column） */
+  /** Whether this is a generated column */
   generated?: boolean;
 }
 
 /**
- * 表索引定义
+ * Table index definition
  */
 export interface TableIndex {
-  /** 索引名 */
+  /** Index name */
   name: string;
 
-  /** 索引列顺序（顺序非常重要） */
+  /** Index column order (order is important) */
   columns: string[];
 
-  /** 是否唯一索引 */
+  /** Whether unique index */
   unique?: boolean;
 
-  /** 索引类型：BTREE / HASH / FULLTEXT / GIN 等 */
+  /** Index type: BTREE / HASH / FULLTEXT / GIN, etc. */
   type?: string;
 }
 
 /**
- * SQL 类型联合
+ * SQL type union
  */
 export type SQLType =
   | IntType
@@ -162,41 +162,41 @@ export type SQLType =
   | EnumType;
 
 /**
- * 跨方言 SQL 类型的统一抽象层
- * 这是整个 IR 最关键的一层：类型系统映射
+ * Cross-dialect SQL type abstraction layer
+ * This is the most critical layer of the IR: type system mapping
  */
 
 /**
- * 整数类型
+ * Integer type
  */
 export interface IntType {
   kind: 'int';
-  /** 显示宽度（如 INT(10)） */
+  /** Display width (e.g., INT(10)) */
   length?: number;
 }
 
 /**
- * 长整数类型
+ * Big integer type
  */
 export interface BigIntType {
   kind: 'bigint';
-  /** 显示宽度（如 BIGINT(20)） */
+  /** Display width (e.g., BIGINT(20)) */
   length?: number;
 }
 
 /**
- * 浮点数类型
+ * Float type
  */
 export interface FloatType {
   kind: 'float';
-  /** 精度（如 FLOAT(10,2) 中的 10） */
+  /** Precision (e.g., 10 in FLOAT(10,2)) */
   precision?: number;
-  /** 小数位数（如 FLOAT(10,2) 中的 2） */
+  /** Scale (e.g., 2 in FLOAT(10,2)) */
   scale?: number;
 }
 
 /**
- * 小数类型
+ * Decimal type
  */
 export interface DecimalType {
   kind: 'decimal';
@@ -205,7 +205,7 @@ export interface DecimalType {
 }
 
 /**
- * 变长字符串类型
+ * Variable-length string type
  */
 export interface VarcharType {
   kind: 'varchar';
@@ -213,42 +213,42 @@ export interface VarcharType {
 }
 
 /**
- * 文本类型
+ * Text type
  */
 export interface TextType {
   kind: 'text';
 }
 
 /**
- * 布尔类型
+ * Boolean type
  */
 export interface BooleanType {
   kind: 'boolean';
 }
 
 /**
- * 日期类型
+ * Date type
  */
 export interface DateType {
   kind: 'date';
 }
 
 /**
- * 日期时间类型
+ * Datetime type
  */
 export interface DateTimeType {
   kind: 'datetime';
 }
 
 /**
- * JSON 类型
+ * JSON type
  */
 export interface JsonType {
   kind: 'json';
 }
 
 /**
- * 枚举类型
+ * Enum type
  */
 export interface EnumType {
   kind: 'enum';

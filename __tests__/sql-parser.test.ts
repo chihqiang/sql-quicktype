@@ -22,26 +22,26 @@ describe('SQL Parser', () => {
       const sql = `
         CREATE TABLE users (
           id INT PRIMARY KEY
-        ) COMMENT '用户表';
+        ) COMMENT 'users table';
       `;
 
       const dbSchema = parseSQL(sql, { dialect: 'mysql', dbName: 'test_db' });
 
-      expect(dbSchema.tables[0].comment).toBe('用户表');
+      expect(dbSchema.tables[0].comment).toBe('users table');
     });
 
     it('should parse column comment', () => {
       const sql = `
         CREATE TABLE users (
-          id INT PRIMARY KEY COMMENT '用户ID',
-          name VARCHAR(255) NOT NULL COMMENT '用户名'
+          id INT PRIMARY KEY COMMENT 'user ID',
+          name VARCHAR(255) NOT NULL COMMENT 'user name'
         );
       `;
 
       const dbSchema = parseSQL(sql, { dialect: 'mysql', dbName: 'test_db' });
 
-      expect(dbSchema.tables[0].columns[0].comment).toBe('用户ID');
-      expect(dbSchema.tables[0].columns[1].comment).toBe('用户名');
+      expect(dbSchema.tables[0].columns[0].comment).toBe('user ID');
+      expect(dbSchema.tables[0].columns[1].comment).toBe('user name');
     });
 
     it('should parse column types correctly', () => {
@@ -225,7 +225,7 @@ describe('SQL Parser', () => {
         );
       `;
 
-      // 注意：由于 node-sql-parser 的 AST 结构可能不包含外键信息，我们只检查解析过程是否正常完成
+      // Note: since node-sql-parser's AST structure may not include foreign key information, we only check that the parsing process completes successfully
       const dbSchema = parseSQL(sql, { dialect: 'mysql', dbName: 'test_db' });
       expect(dbSchema).toBeDefined();
       expect(dbSchema.tables[0].name).toBe('orders');
@@ -248,7 +248,7 @@ describe('SQL Parser', () => {
       const table = dbSchema.tables[0];
 
       expect(table.indexes).toBeDefined();
-      // 注意：由于 node-sql-parser 的 AST 结构可能只包含部分索引信息，这里我们只测试索引数组是否存在
+      // Note: since node-sql-parser's AST structure may only include partial index information, we only test that the index array exists
       expect(Array.isArray(table.indexes)).toBe(true);
     });
 
@@ -441,8 +441,8 @@ describe('SQL Parser', () => {
     });
 
     it('should handle strict mode correctly', () => {
-      // 注意：由于 node-sql-parser 在解析阶段就会拒绝未识别的类型，我们无法测试自定义类型的情况
-      // 这里我们测试其他功能，确保严格模式选项能够正确传递
+      // Note: since node-sql-parser rejects unrecognized types during parsing, we cannot test custom type scenarios
+      // Here we test other functionality to ensure the strict mode option is passed correctly
       const sql = `
         CREATE TABLE test (
           id INT PRIMARY KEY,
@@ -450,7 +450,7 @@ describe('SQL Parser', () => {
         );
       `;
 
-      // 测试严格模式选项能够正确传递
+      // Test that the strict mode option is passed correctly
       const dbSchemaStrict = parseSQL(sql, {
         dialect: 'mysql',
         dbName: 'test_db',
@@ -469,22 +469,22 @@ describe('SQL Parser', () => {
         );
       `;
 
-      // 启用外键解析
+      // Enable foreign key parsing
       const dbSchemaWithFK = parseSQL(sql, {
         dialect: 'mysql',
         dbName: 'test_db',
         parseForeignKeys: true,
       });
-      // 注意：由于 node-sql-parser 的 AST 结构可能不包含外键信息，这里我们只检查解析过程是否正常完成
+      // Note: since node-sql-parser's AST structure may not include foreign key information, we only check that parsing completes successfully
       expect(dbSchemaWithFK).toBeDefined();
 
-      // 禁用外键解析
+      // Disable foreign key parsing
       const dbSchemaWithoutFK = parseSQL(sql, {
         dialect: 'mysql',
         dbName: 'test_db',
         parseForeignKeys: false,
       });
-      // 同样，只检查解析过程是否正常完成
+      // Similarly, only check that parsing completes successfully
       expect(dbSchemaWithoutFK).toBeDefined();
     });
 
@@ -497,7 +497,7 @@ describe('SQL Parser', () => {
         );
       `;
 
-      // 启用索引解析
+      // Enable index parsing
       const dbSchemaWithIndexes = parseSQL(sql, {
         dialect: 'mysql',
         dbName: 'test_db',
@@ -508,7 +508,7 @@ describe('SQL Parser', () => {
         expect(dbSchemaWithIndexes.tables[0].indexes.length).toBeGreaterThan(0);
       }
 
-      // 禁用索引解析
+      // Disable index parsing
       const dbSchemaWithoutIndexes = parseSQL(sql, {
         dialect: 'mysql',
         dbName: 'test_db',
@@ -545,7 +545,7 @@ describe('SQL Parser', () => {
     });
 
     it('should use custom type resolver', () => {
-      // 定义一个自定义类型解析器
+      // Define a custom type resolver
       class CustomTypeResolver implements TypeResolver {
         resolve(def: {
           dataType: string;
@@ -554,7 +554,7 @@ describe('SQL Parser', () => {
         }) {
           const dt = def.dataType.toLowerCase();
 
-          // 自定义处理 'decimal' 类型
+          // Custom handling for 'decimal' type
           if (dt === 'decimal') {
             return {
               kind: 'decimal' as const,
@@ -563,7 +563,7 @@ describe('SQL Parser', () => {
             };
           }
 
-          // 自定义处理 'varchar' 类型
+          // Custom handling for 'varchar' type
           if (dt === 'varchar') {
             return {
               kind: 'varchar' as const,
@@ -571,7 +571,7 @@ describe('SQL Parser', () => {
             };
           }
 
-          // 对于其他类型，返回 null，让默认解析器处理
+          // For other types, return null to let the default resolver handle them
           return null;
         }
       }
@@ -592,19 +592,19 @@ describe('SQL Parser', () => {
       });
       const columns = dbSchema.tables[0].columns;
 
-      // 测试自定义类型解析器是否生效
+      // Test if custom type resolver is working
       expect(columns[1].type.kind).toBe('decimal');
       if (columns[1].type.kind === 'decimal') {
-        expect(columns[1].type.precision).toBe(19); // 自定义解析器返回的值
-        expect(columns[1].type.scale).toBe(4); // 自定义解析器返回的值
+        expect(columns[1].type.precision).toBe(19); // Value returned by custom resolver
+        expect(columns[1].type.scale).toBe(4); // Value returned by custom resolver
       }
 
       expect(columns[2].type.kind).toBe('varchar');
       if (columns[2].type.kind === 'varchar') {
-        expect(columns[2].type.length).toBe(500); // 自定义解析器返回的值
+        expect(columns[2].type.length).toBe(500); // Value returned by custom resolver
       }
 
-      // 测试默认解析器是否仍然生效
+      // Test if default resolver still works
       expect(columns[0].type.kind).toBe('int');
       expect(columns[3].type.kind).toBe('int');
     });
@@ -622,11 +622,11 @@ describe('SQL Parser', () => {
       const dbSchema = parseSQL(sql, {
         dialect: 'mysql',
         dbName: 'test_db',
-        // 不提供自定义类型解析器
+        // Don't provide custom type resolver
       });
       const columns = dbSchema.tables[0].columns;
 
-      // 测试默认类型解析器是否生效
+      // Test if default type resolver works
       expect(columns[0].type.kind).toBe('int');
       expect(columns[1].type.kind).toBe('varchar');
       if (columns[1].type.kind === 'varchar') {
@@ -641,7 +641,7 @@ describe('SQL Parser', () => {
     });
 
     it('should handle multiple type resolvers', () => {
-      // 定义第一个自定义类型解析器
+      // Define first custom type resolver
       class FirstTypeResolver implements TypeResolver {
         resolve(def: {
           dataType: string;
@@ -650,7 +650,7 @@ describe('SQL Parser', () => {
         }) {
           const dt = def.dataType.toLowerCase();
 
-          // 只处理 'decimal' 类型
+          // Only handle 'decimal' type
           if (dt === 'decimal') {
             return {
               kind: 'decimal' as const,
@@ -663,7 +663,7 @@ describe('SQL Parser', () => {
         }
       }
 
-      // 定义第二个自定义类型解析器
+      // Define second custom type resolver
       class SecondTypeResolver implements TypeResolver {
         resolve(def: {
           dataType: string;
@@ -672,7 +672,7 @@ describe('SQL Parser', () => {
         }) {
           const dt = def.dataType.toLowerCase();
 
-          // 只处理 'varchar' 类型
+          // Only handle 'varchar' type
           if (dt === 'varchar') {
             return {
               kind: 'varchar' as const,
@@ -700,33 +700,33 @@ describe('SQL Parser', () => {
       });
       const columns = dbSchema.tables[0].columns;
 
-      // 测试第一个解析器是否生效
+      // Test if first resolver works
       expect(columns[1].type.kind).toBe('decimal');
       if (columns[1].type.kind === 'decimal') {
         expect(columns[1].type.precision).toBe(19);
         expect(columns[1].type.scale).toBe(4);
       }
 
-      // 测试第二个解析器是否生效
+      // Test if second resolver works
       expect(columns[2].type.kind).toBe('varchar');
       if (columns[2].type.kind === 'varchar') {
         expect(columns[2].type.length).toBe(500);
       }
 
-      // 测试默认解析器是否仍然生效
+      // Test if default resolver still works
       expect(columns[0].type.kind).toBe('int');
       expect(columns[3].type.kind).toBe('int');
     });
 
     it('should handle type resolver returning null', () => {
-      // 定义一个总是返回 null 的类型解析器
+      // Define a type resolver that always returns null
       class NullTypeResolver implements TypeResolver {
         resolve(def: {
           dataType: string;
           length?: number | number[];
           scale?: number;
         }) {
-          // 对于所有类型，都返回 null，让默认解析器处理
+          // For all types, return null to let default resolver handle
           return null;
         }
       }
@@ -746,7 +746,7 @@ describe('SQL Parser', () => {
       });
       const columns = dbSchema.tables[0].columns;
 
-      // 测试默认解析器是否仍然生效
+      // Test if default resolver still works
       expect(columns[0].type.kind).toBe('int');
       expect(columns[1].type.kind).toBe('varchar');
       if (columns[1].type.kind === 'varchar') {
@@ -778,39 +778,39 @@ describe('SQL Parser', () => {
       });
       const columns = dbSchema.tables[0].columns;
 
-      // 测试带长度的整数类型
+      // Test integer types with length
       expect(columns[1].type.kind).toBe('int');
       if (columns[1].type.kind === 'int') {
         expect(columns[1].type.length).toBe(10);
       }
 
-      // 测试带长度的长整数类型
+      // Test bigint types with length
       expect(columns[2].type.kind).toBe('bigint');
       if (columns[2].type.kind === 'bigint') {
         expect(columns[2].type.length).toBe(20);
       }
 
-      // 测试带精度和小数位数的浮点数类型
+      // Test float types with precision and scale
       expect(columns[3].type.kind).toBe('float');
       if (columns[3].type.kind === 'float') {
         expect(columns[3].type.precision).toBe(10);
         expect(columns[3].type.scale).toBe(2);
       }
 
-      // 测试带精度和小数位数的双精度浮点数类型
+      // Test double types with precision and scale
       expect(columns[4].type.kind).toBe('float');
       if (columns[4].type.kind === 'float') {
         expect(columns[4].type.precision).toBe(15);
         expect(columns[4].type.scale).toBe(5);
       }
 
-      // 测试不带长度的整数类型
+      // Test integer types without length
       expect(columns[5].type.kind).toBe('int');
       if (columns[5].type.kind === 'int') {
         expect(columns[5].type.length).toBeUndefined();
       }
 
-      // 测试不带精度和小数位数的浮点数类型
+      // Test float types without precision and scale
       expect(columns[6].type.kind).toBe('float');
       if (columns[6].type.kind === 'float') {
         expect(columns[6].type.precision).toBeUndefined();

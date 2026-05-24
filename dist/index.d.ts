@@ -244,7 +244,4 @@ declare function generateCode(sql: string, options: {
     dbName?: string;
 }): string;
 
-declare function readSQLFromFile(path: string): Promise<string>;
-declare function readSQLFromString(sql: string): Promise<string>;
-
-export { BaseGenerator, type BigIntType, type BooleanType, type ColumnSchema, type DatabaseSchema, type DateTimeType, type DateType, type DecimalType, type EnumType, type FloatType, type GenerateOptions, GeneratorFactory, GoGenerator, GormGenerator, type IntType, type JsonType, SQLParser, type SQLParserOptions, type SQLType, type TableIndex, type TableSchema, type TextType, type TypeResolver, TypeScriptGenerator, type VarcharType, XormGenerator, generateCode, parseSQL, readSQLFromFile, readSQLFromString };
+export { BaseGenerator, type BigIntType, type BooleanType, type ColumnSchema, type DatabaseSchema, type DateTimeType, type DateType, type DecimalType, type EnumType, type FloatType, type GenerateOptions, GeneratorFactory, GoGenerator, GormGenerator, type IntType, type JsonType, SQLParser, type SQLParserOptions, type SQLType, type TableIndex, type TableSchema, type TextType, type TypeResolver, TypeScriptGenerator, type VarcharType, XormGenerator, generateCode, parseSQL };

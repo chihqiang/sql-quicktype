@@ -13,7 +13,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmitOnError": true,
-    "removeComments": true
+    "removeComments": true,
+    "types": ["node"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "__tests__"]
