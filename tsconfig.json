@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "noEmitOnError": true,
     "removeComments": true,
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "__tests__"]
