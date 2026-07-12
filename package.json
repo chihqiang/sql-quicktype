@@ -1,6 +1,6 @@
 {
   "name": "@chihqiang/sql-quicktype",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A tool to generate TypeScript, Go, GORM, and XORM types from SQL DDL statements",
   "scripts": {
     "build": "vite build && vite build --mode cli && vite build --mode iife",
