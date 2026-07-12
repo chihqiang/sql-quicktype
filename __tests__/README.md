@@ -4,12 +4,14 @@
 
 ## 测试框架
 
-本项目使用 [Jest](https://jestjs.io/) 作为测试框架，配合 TypeScript 和 ts-jest 进行测试。
+本项目使用 [Vitest](https://vitest.dev/) 作为测试框架，配合 Vite 进行测试。
 
 ## 测试文件
 
 - `sql-parser.test.ts` - SQL 解析器的测试用例
 - `generator.test.ts` - 代码生成器的测试用例
+- `cli.test.ts` - CLI 文件输出功能的测试用例
+- `integration.test.ts` - 端到端集成测试用例
 
 ## 运行测试
 
@@ -100,7 +102,7 @@ it('should parse a new feature', () => {
 
 如果测试失败：
 
-1. 确保已安装所有依赖：`pnpm install`
+1. 确保已安装所有依赖：`npm install`
 2. 确保项目已构建：`npm run build`
 3. 检查测试用例的预期值是否与实际实现一致
 4. 查看详细的错误信息进行调试

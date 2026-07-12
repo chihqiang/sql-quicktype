@@ -66,8 +66,7 @@ export function dbCommand(program: Command) {
           );
           const resultRows = result as RowDataPacket[];
           const createTableSql = resultRows[0]?.['Create Table'] as
-            | string
-            | undefined;
+            string | undefined;
 
           if (!createTableSql) {
             throw new Error(`Failed to get CREATE TABLE for '${tableName}'`);

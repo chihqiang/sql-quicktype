@@ -19,7 +19,7 @@
 ## 安装
 
 ```bash
-pnpm add @chihqiang/sql-quicktype
+npm install @chihqiang/sql-quicktype
 ```
 
 ## 使用方法
