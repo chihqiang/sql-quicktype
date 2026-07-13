@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
         formats: ['es', 'cjs'],
         fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
       },
-      rollupOptions: { external },
+      rollupOptions: { external, treeshake: false },
       outDir: 'dist',
       emptyOutDir: false,
     },
