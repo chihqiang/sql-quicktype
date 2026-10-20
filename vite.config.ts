@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
         },
         rollupOptions: {
           external: [...external, 'mysql2/promise', 'fs', 'path', 'os'],
+          output: {
+            banner: '#!/usr/bin/env node',
+          },
         },
         outDir: 'dist',
         emptyOutDir: false,
