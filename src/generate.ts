@@ -9,11 +9,13 @@ export function generateCode(
     namespace?: string;
     dialect?: string;
     dbName?: string;
+    tinyint1AsInt?: boolean;
   }
 ) {
   const dbSchema = parseSQL(sql, {
     dialect: options.dialect || 'mysql',
     dbName: options.dbName || 'my_database',
+    tinyint1AsBool: !options.tinyint1AsInt,
   });
 
   const generatorOptions: Options = {

@@ -196,8 +196,9 @@ export class GormGenerator extends BaseGenerator {
     }
 
     // add default tag
-    if (column.default) {
-      tags.push(`default:${this.escapeTagValue(column.default)}`);
+    const defaultValue = this.formatDefaultValue(column);
+    if (defaultValue !== null) {
+      tags.push(`default:${this.escapeTagValue(defaultValue)}`);
     }
 
     // add autoIncrement tag

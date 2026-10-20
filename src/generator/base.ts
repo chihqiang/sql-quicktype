@@ -71,13 +71,40 @@ export abstract class BaseGenerator {
   }
 
   /**
-   * Generate default value
+   * Format a default value for use in an ORM tag
+   * String-like literals are quoted so migrations produce valid SQL
    */
-  protected generateDefaultValue(column: ColumnSchema): string {
-    if (!column.default) {
-      return '';
+  protected formatDefaultValue(column: ColumnSchema): string | null {
+    const value = column.default;
+    if (value === null || value === undefined) {
+      return null;
     }
-    return column.default;
+    if (value === '') {
+      return "''";
+    }
+    if (this.isDefaultExpression(value)) {
+      return value;
+    }
+
+    switch (column.type.kind) {
+      case 'varchar':
+      case 'text':
+      case 'date':
+      case 'datetime':
+      case 'enum':
+        return `'${value}'`;
+      default:
+        return value;
+    }
+  }
+
+  private isDefaultExpression(value: string): boolean {
+    return (
+      /^current_timestamp(?:\(\d*\))?$/i.test(value) ||
+      /^now\(\)$/i.test(value) ||
+      /^[a-z_][a-z0-9_]*\(.*\)$/i.test(value) ||
+      /^\(.*\)$/.test(value)
+    );
   }
 
   /**

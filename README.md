@@ -15,6 +15,7 @@
 - **同步 API**：生成器采用同步设计，无异步开销，调用简单直接
 - **并发查询**：数据库模式支持 `Promise.allSettled` 并发查询，大幅提升多表生成性能
 - **自动命名空间**：Go/GORM/XORM 语言自动使用默认命名空间 `models`
+- **GORM 表名映射**：自动生成 `TableName()`，避免 GORM 复数化导致表名不匹配
 
 ## 安装
 
@@ -253,6 +254,7 @@ console.log(gormCode);
 | --namespace | -n | 命名空间/包名（go/gorm/xorm 默认：models） | - |
 | --dialect | -x | SQL 方言（mysql/postgres/sqlite/sqlserver） | mysql |
 | --db-name | - | 数据库名称 | my_database |
+| --tinyint1-as-int | - | 将 tinyint(1) 映射为 int 而非 bool | false |
 
 ### db 命令选项
 
@@ -270,6 +272,7 @@ console.log(gormCode);
 | --namespace | -n | 命名空间/包名（go/gorm/xorm 默认：models） | - |
 | --dialect | -x | SQL 方言（mysql/postgres/sqlite/sqlserver） | mysql |
 | --db-name | - | 数据库名称 | my_database |
+| --tinyint1-as-int | - | 将 tinyint(1) 映射为 int 而非 bool | false |
 
 ## API 文档
 
@@ -287,6 +290,7 @@ console.log(gormCode);
   - `ignoreComments` (boolean): 是否忽略注释（默认：false）
   - `parseForeignKeys` (boolean): 是否解析外键约束（默认：true）
   - `parseIndexes` (boolean): 是否解析索引（默认：true）
+  - `tinyint1AsBool` (boolean): 是否将 tinyint(1) 映射为 boolean（默认：true）
   - `typeResolvers` (TypeResolver[]): 自定义类型解析器数组
 
 **返回值：**
@@ -320,6 +324,7 @@ console.log(gormCode);
   - `namespace` (string): 命名空间/包名（可选）
   - `dialect` (string): SQL 方言（可选，默认：mysql）
   - `dbName` (string): 数据库名称（可选，默认：my_database）
+  - `tinyint1AsInt` (boolean): 是否将 tinyint(1) 映射为 int（可选，默认：false）
 
 **返回值：**
 

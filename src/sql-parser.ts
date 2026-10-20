@@ -71,6 +71,13 @@ export interface SQLParserOptions {
   parseIndexes?: boolean;
 
   /**
+   * Whether to map tinyint(1) to boolean
+   * MySQL stores BOOLEAN as tinyint(1), but tinyint(1) can also hold
+   * values other than 0/1. Default: true
+   */
+  tinyint1AsBool?: boolean;
+
+  /**
    * Custom type resolvers
    * Used to extend or override the default type resolution logic
    */
@@ -236,6 +243,7 @@ export class SQLParser {
     ignoreComments: boolean;
     parseForeignKeys: boolean;
     parseIndexes: boolean;
+    tinyint1AsBool: boolean;
     typeResolvers: TypeResolver[];
   };
   private parser: Parser;
@@ -246,6 +254,7 @@ export class SQLParser {
       ignoreComments: false,
       parseForeignKeys: true,
       parseIndexes: true,
+      tinyint1AsBool: true,
       typeResolvers: [],
       ...options,
     };
@@ -564,6 +573,7 @@ export class SQLParser {
         case 'tinyint':
           // Only treat as boolean when length is 1
           if (
+            this.options.tinyint1AsBool &&
             def.length &&
             (Array.isArray(def.length) ? def.length[0] === 1 : def.length === 1)
           ) {

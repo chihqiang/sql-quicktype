@@ -79,6 +79,7 @@ export function dbCommand(program: Command) {
             namespace: options.namespace,
             dialect: options.dialect,
             dbName: options.dbName || options.database,
+            tinyint1AsInt: options.tinyint1AsInt,
           });
         })
       );

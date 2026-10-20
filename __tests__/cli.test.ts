@@ -120,6 +120,25 @@ describe('CLI', () => {
       expect(content).not.toContain('import "time"');
     });
 
+    it('should map tinyint(1) to int when requested', async () => {
+      const tinySql = `
+        CREATE TABLE flags (
+          id INT PRIMARY KEY,
+          status TINYINT(1) NOT NULL
+        );
+      `;
+      await generateCodeToFiles(tinySql, {
+        ...baseOptions,
+        language: 'gorm',
+        mode: 'multi',
+        tinyint1AsInt: true,
+      });
+
+      const content = fs.readFileSync(path.join(tmpDir, 'flags.go'), 'utf-8');
+      expect(content).toContain('Status int');
+      expect(content).not.toContain('Status bool');
+    });
+
     it('should use default namespace for Go generators', async () => {
       await generateCodeToFiles(sql, {
         ...baseOptions,
