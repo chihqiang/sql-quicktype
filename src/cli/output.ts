@@ -31,7 +31,7 @@ export function addCommonGenerateOptions(command: Command) {
     .option('-o, --output <dir>', 'Output directory', './output')
     .option(
       '-l, --language <lang>',
-      'Target language (gorm, typescript, xorm)',
+      'Target language (go, gorm, typescript, xorm)',
       'typescript'
     )
     .option(
@@ -40,7 +40,7 @@ export function addCommonGenerateOptions(command: Command) {
     )
     .option(
       '-x, --dialect <dialect>',
-      'SQL dialect (mysql, postgres, sqlite, sqlserver)',
+      'SQL dialect passed to node-sql-parser; MySQL is best supported',
       'mysql'
     )
     .option('--db-name <name>', 'Database name', 'my_database')
