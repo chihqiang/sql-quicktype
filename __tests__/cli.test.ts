@@ -91,6 +91,35 @@ describe('CLI', () => {
       expect(userContent).toContain('package models');
     });
 
+    it('should include time import in per-table files in multi mode', async () => {
+      const multiSql = `
+        CREATE TABLE events (
+          id INT PRIMARY KEY,
+          created_at DATETIME NOT NULL
+        );
+      `;
+      await generateCodeToFiles(multiSql, {
+        ...baseOptions,
+        language: 'gorm',
+        mode: 'multi',
+      });
+
+      const content = fs.readFileSync(path.join(tmpDir, 'events.go'), 'utf-8');
+      expect(content).toContain('import "time"');
+      expect(content).toContain('time.Time');
+    });
+
+    it('should not import time when no date columns exist', async () => {
+      await generateCodeToFiles(sql, {
+        ...baseOptions,
+        language: 'gorm',
+        mode: 'multi',
+      });
+
+      const content = fs.readFileSync(path.join(tmpDir, 'users.go'), 'utf-8');
+      expect(content).not.toContain('import "time"');
+    });
+
     it('should use default namespace for Go generators', async () => {
       await generateCodeToFiles(sql, {
         ...baseOptions,

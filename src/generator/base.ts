@@ -80,20 +80,41 @@ export abstract class BaseGenerator {
     return column.default;
   }
 
-  private needsTimeCache: boolean | null = null;
+  /**
+   * Imports required for a standalone per-table file
+   */
+  protected getTableImports(_table: TableSchema): string[] {
+    return [];
+  }
+
+  /**
+   * Generate a complete file for a single table, including package and imports
+   */
+  generateTableFile(table: TableSchema, namespace?: string): string {
+    let result = '';
+    if (namespace) {
+      result += `package ${namespace}\n\n`;
+    }
+
+    const imports = this.getTableImports(table);
+    if (imports.length === 1) {
+      result += `import "${imports[0]}"\n\n`;
+    } else if (imports.length > 1) {
+      result += `import (\n${imports.map((item) => `\t"${item}"`).join('\n')}\n)\n\n`;
+    }
+
+    result += this.generateTable(table);
+    return result;
+  }
+
+  protected tableNeedsTimeImport(table: TableSchema): boolean {
+    return table.columns.some(
+      (column) => column.type.kind === 'date' || column.type.kind === 'datetime'
+    );
+  }
 
   protected needsTimeImport(database: DatabaseSchema): boolean {
-    if (this.needsTimeCache !== null) return this.needsTimeCache;
-    for (const table of database.tables) {
-      for (const column of table.columns) {
-        if (column.type.kind === 'date' || column.type.kind === 'datetime') {
-          this.needsTimeCache = true;
-          return true;
-        }
-      }
-    }
-    this.needsTimeCache = false;
-    return false;
+    return database.tables.some((table) => this.tableNeedsTimeImport(table));
   }
 }
 

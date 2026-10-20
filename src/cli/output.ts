@@ -99,17 +99,14 @@ export async function generateCodeToFiles(
     console.log(`Generated: ${outputFile}`);
   } else {
     for (const table of dbSchema.tables) {
-      const content = generator.generateTable(table);
       const fileName = `${table.name.toLowerCase()}${fileExtension}`;
       const outputFile = path.join(outputDir, fileName);
+      const content = generator.generateTableFile(
+        table,
+        needsNamespace ? generatorOptions.namespace : undefined
+      );
 
-      let fileContent = '';
-      if (generatorOptions.namespace && needsNamespace) {
-        fileContent += `package ${generatorOptions.namespace}\n\n`;
-      }
-      fileContent += content;
-
-      fs.writeFileSync(outputFile, fileContent, 'utf-8');
+      fs.writeFileSync(outputFile, content, 'utf-8');
       console.log(`Generated: ${outputFile}`);
     }
   }

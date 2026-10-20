@@ -100,6 +100,10 @@ export class GormGenerator extends BaseGenerator {
     }
   }
 
+  protected getTableImports(table: TableSchema): string[] {
+    return this.tableNeedsTimeImport(table) ? ['time'] : [];
+  }
+
   /**
    * Generate GORM struct tags
    */

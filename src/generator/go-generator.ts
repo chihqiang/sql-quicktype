@@ -100,6 +100,10 @@ export class GoGenerator extends BaseGenerator {
     }
   }
 
+  protected getTableImports(table: TableSchema): string[] {
+    return this.tableNeedsTimeImport(table) ? ['time'] : [];
+  }
+
   /**
    * Generate Go struct tags
    */
