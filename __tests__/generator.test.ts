@@ -45,6 +45,14 @@ describe('Generator', () => {
       expect(code).toContain('Name string');
     });
 
+    it('should generate a TableName method matching the source table', () => {
+      const generator = GeneratorFactory.createGenerator('gorm');
+      const code = generator.generateTable(dbSchema.tables[0]);
+
+      expect(code).toContain('func (Users) TableName() string {');
+      expect(code).toContain('return "users"');
+    });
+
     it('should include time import when datetime column exists', () => {
       const generator = GeneratorFactory.createGenerator('gorm');
       const code = generator.generateDatabase(dbSchema);

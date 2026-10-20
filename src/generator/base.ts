@@ -88,6 +88,13 @@ export abstract class BaseGenerator {
   }
 
   /**
+   * Escape a value for use inside a Go string literal
+   */
+  protected escapeGoString(value: string): string {
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  }
+
+  /**
    * Escape a value for embedding inside a Go struct tag
    */
   protected escapeTagValue(value: string): string {

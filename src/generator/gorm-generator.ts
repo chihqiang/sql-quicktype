@@ -50,6 +50,9 @@ export class GormGenerator extends BaseGenerator {
     }
 
     result += '}\n';
+    result += `\nfunc (${this.formatTypeName(table.name)}) TableName() string {\n`;
+    result += `\treturn "${this.escapeGoString(table.name)}"\n`;
+    result += '}\n';
     return result;
   }
 
