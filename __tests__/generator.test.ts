@@ -79,6 +79,23 @@ describe('Generator', () => {
       expect(code).toContain('type Test struct');
     });
 
+    it('should sanitize multi-line comments and quotes in generated code', () => {
+      const commentSql = `
+        CREATE TABLE notes (
+          id INT PRIMARY KEY,
+          body VARCHAR(255) NOT NULL DEFAULT 'x' COMMENT 'line1
+line2 "quoted"'
+        );
+      `;
+      const schema = parseSQL(commentSql, { dialect: 'mysql', dbName: 'test' });
+      const generator = GeneratorFactory.createGenerator('gorm');
+      const code = generator.generateTable(schema.tables[0]);
+
+      expect(code).toContain('comment:line1 line2 \\"quoted\\"');
+      expect(code).toContain('// line1 line2 "quoted"');
+      expect(code).not.toContain('line1\nline2');
+    });
+
     it('should generate without inline column comments when disabled', () => {
       const generator = GeneratorFactory.createGenerator('gorm', {
         language: 'gorm',

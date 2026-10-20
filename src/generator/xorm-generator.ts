@@ -63,7 +63,7 @@ export class XormGenerator extends BaseGenerator {
 
     let result = `\t${fieldName} ${typeName} ${tag}`;
     if (column.comment && this.options.generateComments !== false) {
-      result += ` // ${column.comment}`;
+      result += ` // ${this.formatComment(column.comment)}`;
     }
     result += '\n';
 
@@ -196,7 +196,7 @@ export class XormGenerator extends BaseGenerator {
 
     // add default tag
     if (column.default) {
-      tags.push(`default(${column.default})`);
+      tags.push(`default(${this.escapeTagValue(column.default)})`);
     }
 
     // add autoIncrement tag
@@ -206,7 +206,9 @@ export class XormGenerator extends BaseGenerator {
 
     // add comment tag
     if (column.comment) {
-      tags.push(`comment(${column.comment})`);
+      tags.push(
+        `comment(${this.escapeTagValue(this.formatComment(column.comment))})`
+      );
     }
 
     return `\`xorm:"${tags.join(' ')}" json:"${column.name}"\``;

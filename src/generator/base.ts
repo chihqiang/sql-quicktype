@@ -81,6 +81,24 @@ export abstract class BaseGenerator {
   }
 
   /**
+   * Collapse a comment to a single line so it can be safely embedded in generated code
+   */
+  protected formatComment(comment: string): string {
+    return comment.replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * Escape a value for embedding inside a Go struct tag
+   */
+  protected escapeTagValue(value: string): string {
+    return value
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/`/g, "'")
+      .replace(/[\r\n]+/g, ' ');
+  }
+
+  /**
    * Imports required for a standalone per-table file
    */
   protected getTableImports(_table: TableSchema): string[] {

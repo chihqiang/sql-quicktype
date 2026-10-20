@@ -63,7 +63,7 @@ export class GoGenerator extends BaseGenerator {
 
     let result = `\t${fieldName} ${typeName} ${tag}`;
     if (column.comment && this.options.generateComments !== false) {
-      result += ` // ${column.comment}`;
+      result += ` // ${this.formatComment(column.comment)}`;
     }
     result += '\n';
 
