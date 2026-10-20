@@ -416,6 +416,34 @@ describe('SQL Parser', () => {
       expect(table.columns).toHaveLength(19);
     });
 
+    it('should allow tinyint(1) to be mapped to int', () => {
+      const sql = `
+        CREATE TABLE flags (
+          a TINYINT(1),
+          b TINYINT,
+          c BOOLEAN
+        );
+      `;
+
+      const asBool = parseSQL(sql, { dialect: 'mysql', dbName: 'test_db' });
+      expect(asBool.tables[0].columns.map((c) => c.type.kind)).toEqual([
+        'boolean',
+        'int',
+        'boolean',
+      ]);
+
+      const asInt = parseSQL(sql, {
+        dialect: 'mysql',
+        dbName: 'test_db',
+        tinyint1AsBool: false,
+      });
+      expect(asInt.tables[0].columns.map((c) => c.type.kind)).toEqual([
+        'int',
+        'int',
+        'boolean',
+      ]);
+    });
+
     it('should use tablesMap for quick table lookup', () => {
       const sql = `
         CREATE TABLE users (

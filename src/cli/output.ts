@@ -23,6 +23,7 @@ export interface GenerateOptions {
   namespace?: string;
   dialect: string;
   dbName: string;
+  tinyint1AsInt?: boolean;
 }
 
 export function addCommonGenerateOptions(command: Command) {
@@ -42,7 +43,12 @@ export function addCommonGenerateOptions(command: Command) {
       'SQL dialect (mysql, postgres, sqlite, sqlserver)',
       'mysql'
     )
-    .option('--db-name <name>', 'Database name', 'my_database');
+    .option('--db-name <name>', 'Database name', 'my_database')
+    .option(
+      '--tinyint1-as-int',
+      'Map tinyint(1) columns to int instead of bool',
+      false
+    );
 }
 
 export async function generateCodeToFiles(
@@ -71,6 +77,7 @@ export async function generateCodeToFiles(
   const dbSchema = parseSQL(sql, {
     dialect: options.dialect,
     dbName: options.dbName,
+    tinyint1AsBool: !options.tinyint1AsInt,
   });
   console.log(`Parsed ${dbSchema.tables.length} table(s)`);
 
@@ -99,17 +106,14 @@ export async function generateCodeToFiles(
     console.log(`Generated: ${outputFile}`);
   } else {
     for (const table of dbSchema.tables) {
-      const content = generator.generateTable(table);
       const fileName = `${table.name.toLowerCase()}${fileExtension}`;
       const outputFile = path.join(outputDir, fileName);
+      const content = generator.generateTableFile(
+        table,
+        needsNamespace ? generatorOptions.namespace : undefined
+      );
 
-      let fileContent = '';
-      if (generatorOptions.namespace && needsNamespace) {
-        fileContent += `package ${generatorOptions.namespace}\n\n`;
-      }
-      fileContent += content;
-
-      fs.writeFileSync(outputFile, fileContent, 'utf-8');
+      fs.writeFileSync(outputFile, content, 'utf-8');
       console.log(`Generated: ${outputFile}`);
     }
   }

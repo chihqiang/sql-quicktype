@@ -50,6 +50,9 @@ export class GormGenerator extends BaseGenerator {
     }
 
     result += '}\n';
+    result += `\nfunc (${this.formatTypeName(table.name)}) TableName() string {\n`;
+    result += `\treturn "${this.escapeGoString(table.name)}"\n`;
+    result += '}\n';
     return result;
   }
 
@@ -63,7 +66,7 @@ export class GormGenerator extends BaseGenerator {
 
     let result = `\t${fieldName} ${typeName} ${tag}`;
     if (column.comment && this.options.generateComments !== false) {
-      result += ` // ${column.comment}`;
+      result += ` // ${this.formatComment(column.comment)}`;
     }
     result += '\n';
 
@@ -98,6 +101,10 @@ export class GormGenerator extends BaseGenerator {
       default:
         return 'string';
     }
+  }
+
+  protected getTableImports(table: TableSchema): string[] {
+    return this.tableNeedsTimeImport(table) ? ['time'] : [];
   }
 
   /**
@@ -189,8 +196,9 @@ export class GormGenerator extends BaseGenerator {
     }
 
     // add default tag
-    if (column.default) {
-      tags.push(`default:${column.default}`);
+    const defaultValue = this.formatDefaultValue(column);
+    if (defaultValue !== null) {
+      tags.push(`default:${this.escapeTagValue(defaultValue)}`);
     }
 
     // add autoIncrement tag
@@ -200,7 +208,9 @@ export class GormGenerator extends BaseGenerator {
 
     // add comment tag
     if (column.comment) {
-      tags.push(`comment:${column.comment}`);
+      tags.push(
+        `comment:${this.escapeTagValue(this.formatComment(column.comment))}`
+      );
     }
 
     return `\`gorm:"${tags.join(';')}" json:"${column.name}"\``;

@@ -71,29 +71,102 @@ export abstract class BaseGenerator {
   }
 
   /**
-   * Generate default value
+   * Format a default value for use in an ORM tag
+   * String-like literals are quoted so migrations produce valid SQL
    */
-  protected generateDefaultValue(column: ColumnSchema): string {
-    if (!column.default) {
-      return '';
+  protected formatDefaultValue(column: ColumnSchema): string | null {
+    const value = column.default;
+    if (value === null || value === undefined) {
+      return null;
     }
-    return column.default;
+    if (value === '') {
+      return "''";
+    }
+    if (this.isDefaultExpression(value)) {
+      return value;
+    }
+
+    switch (column.type.kind) {
+      case 'varchar':
+      case 'text':
+      case 'date':
+      case 'datetime':
+      case 'enum':
+        return `'${value}'`;
+      default:
+        return value;
+    }
   }
 
-  private needsTimeCache: boolean | null = null;
+  private isDefaultExpression(value: string): boolean {
+    return (
+      /^current_timestamp(?:\(\d*\))?$/i.test(value) ||
+      /^now\(\)$/i.test(value) ||
+      /^[a-z_][a-z0-9_]*\(.*\)$/i.test(value) ||
+      /^\(.*\)$/.test(value)
+    );
+  }
+
+  /**
+   * Collapse a comment to a single line so it can be safely embedded in generated code
+   */
+  protected formatComment(comment: string): string {
+    return comment.replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * Escape a value for use inside a Go string literal
+   */
+  protected escapeGoString(value: string): string {
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  }
+
+  /**
+   * Escape a value for embedding inside a Go struct tag
+   */
+  protected escapeTagValue(value: string): string {
+    return value
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/`/g, "'")
+      .replace(/[\r\n]+/g, ' ');
+  }
+
+  /**
+   * Imports required for a standalone per-table file
+   */
+  protected getTableImports(_table: TableSchema): string[] {
+    return [];
+  }
+
+  /**
+   * Generate a complete file for a single table, including package and imports
+   */
+  generateTableFile(table: TableSchema, namespace?: string): string {
+    let result = '';
+    if (namespace) {
+      result += `package ${namespace}\n\n`;
+    }
+
+    const imports = this.getTableImports(table);
+    if (imports.length === 1) {
+      result += `import "${imports[0]}"\n\n`;
+    } else if (imports.length > 1) {
+      result += `import (\n${imports.map((item) => `\t"${item}"`).join('\n')}\n)\n\n`;
+    }
+
+    result += this.generateTable(table);
+    return result;
+  }
+
+  protected tableNeedsTimeImport(table: TableSchema): boolean {
+    return table.columns.some(
+      (column) => column.type.kind === 'date' || column.type.kind === 'datetime'
+    );
+  }
 
   protected needsTimeImport(database: DatabaseSchema): boolean {
-    if (this.needsTimeCache !== null) return this.needsTimeCache;
-    for (const table of database.tables) {
-      for (const column of table.columns) {
-        if (column.type.kind === 'date' || column.type.kind === 'datetime') {
-          this.needsTimeCache = true;
-          return true;
-        }
-      }
-    }
-    this.needsTimeCache = false;
-    return false;
+    return database.tables.some((table) => this.tableNeedsTimeImport(table));
   }
 }
 

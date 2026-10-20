@@ -32,6 +32,7 @@ export function sqlCommand(program: Command) {
         namespace: options.namespace,
         dialect: options.dialect,
         dbName: options.dbName,
+        tinyint1AsInt: options.tinyint1AsInt,
       });
     } catch (error) {
       console.error('Error:', error);

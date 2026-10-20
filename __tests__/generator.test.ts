@@ -45,6 +45,14 @@ describe('Generator', () => {
       expect(code).toContain('Name string');
     });
 
+    it('should generate a TableName method matching the source table', () => {
+      const generator = GeneratorFactory.createGenerator('gorm');
+      const code = generator.generateTable(dbSchema.tables[0]);
+
+      expect(code).toContain('func (Users) TableName() string {');
+      expect(code).toContain('return "users"');
+    });
+
     it('should include time import when datetime column exists', () => {
       const generator = GeneratorFactory.createGenerator('gorm');
       const code = generator.generateDatabase(dbSchema);
@@ -77,6 +85,48 @@ describe('Generator', () => {
       const generator = GeneratorFactory.createGenerator('gorm');
       const code = generator.generateTable(schema.tables[0]);
       expect(code).toContain('type Test struct');
+    });
+
+    it('should quote string and date defaults in tags', () => {
+      const defaultSql = `
+        CREATE TABLE defaults_test (
+          id INT PRIMARY KEY,
+          name VARCHAR(20) NOT NULL DEFAULT 'x',
+          empty_name VARCHAR(20) NOT NULL DEFAULT '',
+          created_on DATE NOT NULL DEFAULT '0000-00-00',
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          amount INT NOT NULL DEFAULT 0
+        );
+      `;
+      const schema = parseSQL(defaultSql, {
+        dialect: 'mysql',
+        dbName: 'test',
+      });
+      const generator = GeneratorFactory.createGenerator('gorm');
+      const code = generator.generateTable(schema.tables[0]);
+
+      expect(code).toContain("default:'x'");
+      expect(code).toContain("default:''");
+      expect(code).toContain("default:'0000-00-00'");
+      expect(code).toContain('default:CURRENT_TIMESTAMP');
+      expect(code).toContain('default:0');
+    });
+
+    it('should sanitize multi-line comments and quotes in generated code', () => {
+      const commentSql = `
+        CREATE TABLE notes (
+          id INT PRIMARY KEY,
+          body VARCHAR(255) NOT NULL DEFAULT 'x' COMMENT 'line1
+line2 "quoted"'
+        );
+      `;
+      const schema = parseSQL(commentSql, { dialect: 'mysql', dbName: 'test' });
+      const generator = GeneratorFactory.createGenerator('gorm');
+      const code = generator.generateTable(schema.tables[0]);
+
+      expect(code).toContain('comment:line1 line2 \\"quoted\\"');
+      expect(code).toContain('// line1 line2 "quoted"');
+      expect(code).not.toContain('line1\nline2');
     });
 
     it('should generate without inline column comments when disabled', () => {

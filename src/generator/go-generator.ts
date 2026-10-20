@@ -63,7 +63,7 @@ export class GoGenerator extends BaseGenerator {
 
     let result = `\t${fieldName} ${typeName} ${tag}`;
     if (column.comment && this.options.generateComments !== false) {
-      result += ` // ${column.comment}`;
+      result += ` // ${this.formatComment(column.comment)}`;
     }
     result += '\n';
 
@@ -98,6 +98,10 @@ export class GoGenerator extends BaseGenerator {
       default:
         return 'string';
     }
+  }
+
+  protected getTableImports(table: TableSchema): string[] {
+    return this.tableNeedsTimeImport(table) ? ['time'] : [];
   }
 
   /**
